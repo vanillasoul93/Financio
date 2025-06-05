@@ -32,16 +32,13 @@ if (process.contextIsolated) {
       deleteGoal: (id) => ipcRenderer.invoke('delete-goal', id),
 
       //Misc API calls
-      onReceivedData: (callback) => ipcRenderer.on('received-data', callback),
-
-      // Method to request a screenshot
-      takeScreenshot: (billId) => ipcRenderer.send('take-screenshot', billId),
-      // Listener for when a screenshot is taken and returned
-      // Now returns a cleanup function
-      onScreenshotTaken: (callback) => {
-        ipcRenderer.on('screenshot-taken', callback)
-        // Return a function to clean up this specific listener
-        return () => ipcRenderer.removeListener('screenshot-taken', callback)
+      // Updated to include a cleanup function, which is good practice for listeners
+      onReceivedData: (callback) => {
+        const handler = (event, ...args) => callback(...args)
+        ipcRenderer.on('received-data', handler)
+        return () => {
+          ipcRenderer.removeListener('received-data', handler)
+        }
       },
 
       //BillPayment Section
@@ -49,7 +46,41 @@ if (process.contextIsolated) {
         ipcRenderer.invoke('save-screenshot-to-disk', { billId, billTitle, imageData }),
 
       // Existing method for opening websites
-      openWebsite: (url) => ipcRenderer.send('open-website', url)
+      openWebsite: (url) => ipcRenderer.send('open-website', url),
+      // --- NEW: Screen Region Capture IPC Calls ---
+      /**
+       * Signals the main process to open the screen capture overlay window.
+       * Call this when your "select region for screenshot" button is clicked.
+       */
+      openRegionCapture: () => ipcRenderer.send('open-overlay-window'),
+
+      /**
+       * Listens for a notification that a screenshot (from region selection) has been successfully taken.
+       * The callback will receive the file path (or any data your main process sends).
+       * @param callback Function to handle the success data (e.g., filePath).
+       * @returns Function to remove the event listener.
+       */
+      onRegionCaptureSuccess: (callback) => {
+        const handler = (event, ...args) => callback(...args) // Use ...args to be flexible with what main sends
+        ipcRenderer.on('screenshot-taken', handler) // Ensure 'screenshot-taken' matches the channel used in main.js
+        return () => {
+          ipcRenderer.removeListener('screenshot-taken', handler)
+        }
+      },
+
+      /**
+       * Listens for errors that occurred during the region capture or screenshot process.
+       * @param callback Function to handle the error message/data.
+       * @returns Function to remove the event listener.
+       */
+      onRegionCaptureError: (callback) => {
+        const handler = (event, ...args) => callback(...args) // Use ...args
+        ipcRenderer.on('screenshot-error', handler) // Ensure 'screenshot-error' matches the channel used in main.js
+        return () => {
+          ipcRenderer.removeListener('screenshot-error', handler)
+        }
+      }
+      // --- END: Screen Region Capture IPC Calls ---
     })
   } catch (error) {
     console.error(error)

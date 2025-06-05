@@ -1,38 +1,29 @@
 import React, { useEffect, useState } from 'react'
 import Header from '../../components/Header'
-import dayjs from 'dayjs'
+// import dayjs from 'dayjs';
 import { Box, Grid, useTheme, Typography, Fade } from '@mui/material'
 import { tokens } from '../../theme'
 import BillPaymentCard from '../../components/BillPaymentCard'
 import CreditPaymentCard from '../../components/CreditPaymentCard'
 import paymentReceipt from '../../images/bill_payment_image.png'
-import placetest from '../../images/WavyBlue.jpg'
 
 export default function PayBillView() {
   const [bills, setBills] = useState([])
   const [cards, setCards] = useState([])
-  const [subscriptions, setSubscriptions] = useState([])
+  // const [subscriptions, setSubscriptions] = useState([]);
   const theme = useTheme()
   const colors = tokens(theme.palette.mode)
 
-  // State to hold the captured screenshot data for a specific bill
-  // Format: { billId: 'someId', imageUrl: 'data:image/png;base64,...' }
-
-  // State to track if screenshot capture is in progress
-  const [loadingScreenshot, setLoadingScreenshot] = useState(false)
+  const [activeBillIdForScreenshot, setActiveBillIdForScreenshot] = useState(null)
 
   useEffect(() => {
-    // Set initial date
-    const currentDate = dayjs()
-
     const fetchData = async () => {
       try {
-        // Mocking window.api calls for demonstration in this environment
-        // In your actual Electron project, ensure window.api methods are correctly exposed
         const billsData =
           window.api && window.api.getBills
             ? await window.api.getBills()
             : [
+                /* Your mock bill data */
                 {
                   id: 'bill1',
                   name: 'Electricity Bill',
@@ -40,7 +31,9 @@ export default function PayBillView() {
                   amount_paid: 0,
                   date_due: '2025-06-15',
                   previous_payment: 110.25,
-                  website: 'https://example.com/electricity'
+                  website: 'https://example.com/electricity',
+                  confirmationImageUrl: paymentReceipt,
+                  loadingScreenshot: false
                 },
                 {
                   id: 'bill2',
@@ -49,7 +42,9 @@ export default function PayBillView() {
                   amount_paid: 0,
                   date_due: '2025-06-20',
                   previous_payment: 65.0,
-                  website: 'https://example.com/internet'
+                  website: 'https://example.com/internet',
+                  confirmationImageUrl: paymentReceipt,
+                  loadingScreenshot: false
                 },
                 {
                   id: 'bill3',
@@ -58,15 +53,16 @@ export default function PayBillView() {
                   amount_paid: 0,
                   date_due: '2025-06-10',
                   previous_payment: 40.0,
-                  website: 'https://example.com/water'
+                  website: 'https://example.com/water',
+                  confirmationImageUrl: paymentReceipt,
+                  loadingScreenshot: false
                 }
               ]
-        const subscriptionsData =
-          window.api && window.api.getSubscriptions ? await window.api.getSubscriptions() : []
         const cardsData =
           window.api && window.api.getCreditCards
             ? await window.api.getCreditCards()
             : [
+                /* Your mock card data */
                 {
                   id: 'card1',
                   name: 'Visa Platinum',
@@ -89,105 +85,93 @@ export default function PayBillView() {
                 }
               ]
 
-        // Initialize bills with a confirmationImageUrl property if it doesn't exist
         const initializedBills = billsData.map((bill) => ({
           ...bill,
-          confirmationImageUrl: bill.confirmationImageUrl || paymentReceipt
+          confirmationImageUrl: bill.confirmationImageUrl || paymentReceipt,
+          loadingScreenshot: bill.loadingScreenshot !== undefined ? bill.loadingScreenshot : false
         }))
 
         setBills(initializedBills)
-        setSubscriptions(subscriptionsData)
         setCards(cardsData)
+        // setSubscriptions(subscriptionsData);
       } catch (error) {
         console.error('Error fetching data:', error)
-        // Implement user-friendly error handling here (e.g., show a toast message)
       }
     }
 
     fetchData()
+  }, [])
 
-    // Centralized listener for screenshot results
-    const handleScreenshotTaken = (event, imageData, billId) => {
-      console.log(`[renderer/PayBillView] Screenshot taken for billId: ${billId}`)
-      // --- START ADDITION: Log imageData length ---
-      console.log(
-        `[renderer/PayBillView] Received imageData length: ${imageData ? imageData.length : 'null'}`
-      )
-      // --- END ADDITION ---
-      setLoadingScreenshot(false) // Stop loading regardless of success or failure
-
-      // --- FIX: Update the specific bill's confirmationImageUrl directly ---
-      setBills((prevBills) =>
-        prevBills.map((bill) => {
-          if (bill.id === billId) {
-            if (imageData) {
-              console.log(`[renderer/PayBillView] Updating bill ${billId} with new screenshot.`)
-              console.log('image data: ' + imageData)
-
-              // --- END ADDITION ---
-              return { ...bill, confirmationImageUrl: imageData }
-            } else {
-              console.warn(
-                `[renderer/PayBillView] Screenshot capture failed or cancelled for billId: ${billId}. Keeping existing image.`
-              )
-              return bill // Keep existing image if capture failed/cancelled
-            }
-          }
-          return bill
-        })
-      )
-      // --- END FIX ---
+  useEffect(() => {
+    const handleRegionCaptureSuccess = (filePathOrDataUrl) => {
+      if (activeBillIdForScreenshot) {
+        setBills((prevBills) =>
+          prevBills.map((bill) =>
+            bill.id === activeBillIdForScreenshot
+              ? { ...bill, confirmationImageUrl: filePathOrDataUrl, loadingScreenshot: false }
+              : bill
+          )
+        )
+        setActiveBillIdForScreenshot(null)
+      }
     }
 
-    if (window.api && window.api.onScreenshotTaken) {
-      window.api.onScreenshotTaken(handleScreenshotTaken)
-      console.log('[renderer/PayBillView] Registered onScreenshotTaken listener.')
+    const handleRegionCaptureError = (error) => {
+      if (activeBillIdForScreenshot) {
+        console.error(
+          `[PayBillView] Region screenshot error for bill ID ${activeBillIdForScreenshot}:`,
+          error
+        )
+        setBills((prevBills) =>
+          prevBills.map((bill) =>
+            bill.id === activeBillIdForScreenshot ? { ...bill, loadingScreenshot: false } : bill
+          )
+        )
+        setActiveBillIdForScreenshot(null)
+      }
+    }
+
+    let cleanupSuccess = () => {}
+    let cleanupError = () => {}
+
+    if (window.api && window.api.onRegionCaptureSuccess && window.api.onRegionCaptureError) {
+      cleanupSuccess = window.api.onRegionCaptureSuccess(handleRegionCaptureSuccess)
+      cleanupError = window.api.onRegionCaptureError(handleRegionCaptureError)
     } else {
-      console.error(
-        '[renderer/PayBillView] window.api.onScreenshotTaken is not available. Check preload script.'
-      )
+      console.error('[PayBillView] Region capture IPC listeners not available on window.api.')
     }
 
     return () => {
-      // Clean up the listener when the component unmounts
-      if (window.api && window.api.removeListener) {
-        window.api.removeListener('screenshot-taken', handleScreenshotTaken)
-        console.log('[renderer/PayBillView] Unregistered onScreenshotTaken listener.')
-      }
+      cleanupSuccess()
+      cleanupError()
     }
-  }, []) // Dependency array: re-run if currentBillIdForScreenshot changes
+  }, [activeBillIdForScreenshot])
 
-  // Function to be passed to BillPaymentCard to initiate screenshot
   const handleTakeScreenshotForBill = (billId) => {
-    if (window.api && window.api.takeScreenshot) {
-      console.log(`[renderer/PayBillView] Requesting screenshot for bill ID: ${billId}...`)
-      setLoadingScreenshot(true) // Start global loading state
-      window.api.takeScreenshot(billId) // Pass the billId to the main process
-    } else {
-      console.warn(
-        '[renderer/PayBillView] window.api.takeScreenshot is not available. Ensure your preload script is set up.'
-      )
-      setLoadingScreenshot(false) // Reset loading if API is not available
-      // For demonstration, update the specific bill with a placeholder image immediately
+    if (window.api && window.api.openRegionCapture) {
+      setActiveBillIdForScreenshot(billId)
       setBills((prevBills) =>
-        prevBills.map((bill) =>
-          bill.id === billId
-            ? {
-                ...bill,
-                confirmationImageUrl: placetest
-              }
-            : bill
-        )
+        prevBills.map((b) => (b.id === billId ? { ...b, loadingScreenshot: true } : b))
+      )
+      window.api.openRegionCapture()
+    } else {
+      console.warn('[PayBillView] window.api.openRegionCapture is not available.')
+      setBills((prevBills) =>
+        prevBills.map((b) => (b.id === billId ? { ...b, loadingScreenshot: false } : b))
       )
     }
   }
 
-  // Function to handle saving updated bill data from BillPaymentCard
+  const setBillLoadingState = (billId, isLoading) => {
+    setBills((prevBills) =>
+      prevBills.map((bill) =>
+        bill.id === billId ? { ...bill, loadingScreenshot: isLoading } : bill
+      )
+    )
+  }
+
   const handleSaveBill = (updatedBill) => {
-    console.log('Saving updated bill:', updatedBill)
-    // Here you would typically send this updatedBill data to your backend/database
-    // For example: window.api.saveBill(updatedBill);
-    // After saving, you might want to clear the activeScreenshotData if it was just for this save
+    setBills((prevBills) => prevBills.map((b) => (b.id === updatedBill.id ? updatedBill : b)))
   }
 
   return (
@@ -196,37 +180,32 @@ export default function PayBillView() {
         padding: 3,
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh', // This sets the overall page height
+        height: '100vh',
         maxHeight: '100vh',
-        overflow: 'hidden' // This prevents the overall page from scrolling
+        overflow: 'hidden'
       }}
     >
-      {/* Overall Page Header */}
       <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
         <Header title="PAY BILLS" subtitle="And the money trickles away." />
       </Box>
 
-      {/* Main Content Area: Takes remaining vertical height of the page */}
       <Box
         sx={{
-          flexGrow: 1, // Allows this Box to fill vertical space
+          flexGrow: 1,
           marginTop: '16px',
-          display: 'flex' // Makes its children (the two columns) flex items
+          display: 'flex'
         }}
       >
         <Fade in={true} timeout={500}>
-          {/* Parent Grid Container for the two columns (as row flex) */}
           <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-            {' '}
-            {/* Takes all remaining space */}
             {/* --- Left Column (Bills) --- */}
-            <Grid
-              size={{ xs: 6 }}
+            <Grid // This is a Grid item, its size is defined by the 'size' prop
+              size={{ xs: 12, md: 6 }} // Corrected: Using 'size' prop for responsiveness
               sx={{
                 display: 'flex',
-                flexDirection: 'column', // Stacks header and scrollable content vertically
-                minHeight: 0, // Allows this Grid item to shrink
-                paddingRight: '8px'
+                flexDirection: 'column',
+                minHeight: 0,
+                paddingRight: { xs: 0, md: '8px' } // Responsive padding
               }}
             >
               {/* Header for Bills Column (fixed at top) */}
@@ -251,7 +230,6 @@ export default function PayBillView() {
                 </Typography>
               </Box>
 
-              {/* Header for Bills Column (fixed at top) */}
               <Typography
                 variant="h4"
                 fontWeight="bold"
@@ -261,34 +239,34 @@ export default function PayBillView() {
                 Bills
               </Typography>
 
-              {/* Scrollable Content Wrapper for Bills - ADDED height: 0 */}
               <Box
                 sx={{
-                  flexGrow: 1, // Takes remaining vertical space in this column
-                  overflowY: 'auto', // Enables scrolling
-                  minHeight: 0, // Allows flex item to shrink
-                  height: 0, // <--- ADDED THIS LINE: Crucial for some Flexbox scenarios
-                  paddingRight: '8px'
+                  flexGrow: 1,
+                  overflowY: 'auto',
+                  minHeight: 0,
+                  paddingRight: { xs: 0, md: '8px' } // Responsive padding for scrollbar
                 }}
               >
-                {/* Inner Grid Container for BillPaymentCards (content) */}
-                <Grid container direction="column" spacing={4}>
+                <Grid container direction="column" spacing={2}>
                   {bills.map((bill) => (
                     <Grid size={{ xs: 12 }} key={bill.id}>
+                      {' '}
+                      {/* Corrected: Using 'size' prop */}
                       <BillPaymentCard
                         id={bill.id}
                         title={bill.name}
                         amountDue={bill.amount_due}
-                        amountPaid={bill.amount_paid} // Ensure amount_paid is passed
+                        amountPaid={bill.amount_paid}
                         dateDue={bill.date_due}
                         previousAmountPaid={bill.previous_payment}
                         website={bill.website}
-                        onSave={handleSaveBill} // Pass the centralized save handler
-                        onTakeScreenshot={() => handleTakeScreenshotForBill(bill.id)} // Pass handler with bill.id
-                        // Pass the captured image URL directly from the bill object
+                        onSave={handleSaveBill}
+                        onTakeScreenshot={() => handleTakeScreenshotForBill(bill.id)}
                         confirmationImageUrl={bill.confirmationImageUrl}
-                        loadingScreenshot={loadingScreenshot} // Global loading state
-                        setLoadingScreenshot={setLoadingScreenshot}
+                        loadingScreenshot={bill.loadingScreenshot}
+                        setLoadingScreenshot={(isLoading) =>
+                          setBillLoadingState(bill.id, isLoading)
+                        }
                       />
                     </Grid>
                   ))}
@@ -296,13 +274,13 @@ export default function PayBillView() {
               </Box>
             </Grid>
             {/* --- Right Column (Credit Cards) --- */}
-            <Grid
-              size={{ xs: 6 }}
+            <Grid // This is a Grid item
+              size={{ xs: 12, md: 6 }} // Corrected: Using 'size' prop for responsiveness
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 minHeight: 0,
-                paddingRight: '8px'
+                paddingLeft: { xs: 0, md: '8px' } // Responsive padding
               }}
             >
               <Box
@@ -325,7 +303,6 @@ export default function PayBillView() {
                   $854.26
                 </Typography>
               </Box>
-              {/* Header for Credit Cards Column (fixed at top) */}
               <Typography
                 variant="h4"
                 fontWeight="bold"
@@ -334,21 +311,19 @@ export default function PayBillView() {
               >
                 Credit Cards
               </Typography>
-
-              {/* Scrollable Content Wrapper for Credit Cards - ADDED height: 0 */}
               <Box
                 sx={{
                   flexGrow: 1,
                   overflowY: 'auto',
                   minHeight: 0,
-                  height: 0, // <--- ADDED THIS LINE: Crucial for some Flexbox scenarios
-                  paddingRight: '8px'
+                  paddingRight: { xs: 0, md: '8px' } // Responsive padding for scrollbar
                 }}
               >
-                {/* Inner Grid Container for Credit Cards (content) */}
-                <Grid container direction="column" spacing={4}>
+                <Grid container direction="column" spacing={2}>
                   {cards.map((card) => (
                     <Grid size={{ xs: 12 }} key={card.id}>
+                      {' '}
+                      {/* Corrected: Using 'size' prop */}
                       <CreditPaymentCard
                         title={card.name}
                         dateDue={card.date_due}

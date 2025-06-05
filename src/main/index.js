@@ -14,9 +14,8 @@ const { electronApp, optimizer, is } = require('@electron-toolkit/utils') // Use
 const icon = path.join(app.getAppPath(), 'resources', 'icon.png')
 
 let mainWindow // Your main React application window (global)
-// --- CHANGE: Use a Map to store multiple screenshot windows, keyed by display ID ---
-const screenshotWindows = new Map() // Map<displayId, BrowserWindow>
-let activeBillIdForScreenshot = null // To keep track of the billId for the current screenshot session
+let activeOverlayWindows = new Map() // To store active overlay windows <BrowserWindow.id, BrowserWindow>
+
 let APP_BASE_PATH // To store the application's base path reliably (still useful for other assets)
 
 const sqlite3 = require('sqlite3').verbose()
@@ -65,7 +64,6 @@ function createMainWindow() {
     console.log('mainWindow closed.')
     mainWindow = null
     // Close all screenshot windows if main window closes
-    closeAllScreenshotWindows()
   })
 
   mainWindow.on('ready-to-show', () => {
@@ -91,87 +89,69 @@ function createMainWindow() {
   console.log('mainWindow created successfully.')
 }
 
-// --- NEW FUNCTION: Create a screenshot window for a specific display ---
-async function createScreenshotWindowForDisplay(display, billId) {
-  console.log(
-    `[main] Creating screenshotWindow for display ID: ${display.id} (Bounds: ${JSON.stringify(display.bounds)})`
-  )
+function createOverlayWindow() {
+  // 1. Get the primary display's information
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height } = primaryDisplay.size // Gets the resolution (e.g., 1920x1080)
+  const { x, y } = primaryDisplay.bounds // Gets the top-left coordinates of the display
 
-  const screenshotWin = new BrowserWindow({
-    x: display.bounds.x,
-    y: display.bounds.y,
-    width: display.bounds.width,
-    height: display.bounds.height,
-    transparent: true,
+  console.log('Main process __dirname for overlay creation:', __dirname) // For path debugging
+  console.log(`Primary display dimensions: ${width}x${height} at (${x},${y})`)
+
+  overlayWindow = new BrowserWindow({
+    // 2. Set window size and position to cover the entire monitor
+    x: x, // Use bounds.x for multi-monitor or non-standard primary display setups
+    y: y, // Use bounds.y
+    width: width,
+    height: height,
+
+    // 3. Remove window border and title bar
     frame: false,
-    alwaysOnTop: true,
-    fullscreen: false, // We set custom bounds, not fullscreen mode
+
+    // --- Other useful options for an overlay ---
+    transparent: true, // Makes parts of the window transparent (if your HTML/CSS allows)
+    alwaysOnTop: true, // Keeps the overlay on top of other applications
+    skipTaskbar: true, // Prevents the window from appearing in the taskbar
+    focusable: true, // Allows the window to receive focus and capture mouse/keyboard events
+    // webContents: {
+    //   openDevTools: true // Optional: for debugging the overlay window itself
+    // },
     webPreferences: {
-      preload: path.join(__dirname, '../preload', 'screenshotSelectionPreload.js'),
+      preload: path.join(__dirname, '../preload/overlayPreload.js'), // Corrected path
+      contextIsolation: true,
       nodeIntegration: false,
-      contextIsolation: true
+      devTools: true // Enables DevTools in the overlay renderer if needed for debugging
     }
   })
 
-  if (!screenshotWin) {
-    console.error(`[main] Failed to create screenshotWin for display ID: ${display.id}`)
-    return null
-  }
+  const overlayHtmlPath = path.join(__dirname, '../renderer/overlay.html') // Corrected path
+  console.log('Attempting to load overlay.html from:', overlayHtmlPath)
+  overlayWindow
+    .loadFile(overlayHtmlPath)
+    .then(() => {
+      console.log('Overlay HTML loaded successfully.')
+      // Optionally, ensure it's focused after loading, though 'focusable: true' and being a new window often handles this.
+      // overlayWindow.focus();
+    })
+    .catch((err) => {
+      console.error('Failed to load overlay HTML:', err)
+    })
 
-  screenshotWin.loadFile(path.join(__dirname, '../renderer', 'screenshotSelection.html'))
-
-  screenshotWin.webContents.openDevTools() // Keep open for debugging each window
-
-  screenshotWin.on('closed', () => {
-    console.log(`[main] screenshotWindow for display ID: ${display.id} closed.`)
-    screenshotWindows.delete(display.id) // Remove from our map
+  overlayWindow.on('closed', () => {
+    console.log('Overlay window closed.')
+    overlayWindow = null
   })
-
-  screenshotWin.on('ready-to-show', async () => {
-    // Get the desktopCapturer source ID for this specific display
-    const sources = await desktopCapturer.getSources({ types: ['screen'] })
-    const displaySource = sources.find((source) => source.display_id === display.id.toString())
-
-    if (displaySource) {
-      console.log(
-        `[main] Sending start-capture-stream to renderer for display ID: ${display.id}, source ID: ${displaySource.id}`
-      )
-      // Send the specific source ID for this display to its renderer
-      screenshotWin.webContents.send('start-capture-stream', displaySource.id, billId)
-      screenshotWin.show()
-      screenshotWin.focus() // Ensure the window gets focus
-      console.log(`[main] screenshotWindow for display ID: ${display.id} shown and focused.`)
-    } else {
-      console.error(
-        `[main] Desktop capturer source not found for display ID: ${display.id}. Closing window.`
-      )
-      screenshotWin.destroy() // Close this window if source not found
-    }
-  })
-
-  screenshotWindows.set(display.id, screenshotWin) // Add to our map
-  return screenshotWin
 }
 
-// --- NEW FUNCTION: Close all active screenshot windows ---
-function closeAllScreenshotWindows() {
-  console.log('[main] Closing all screenshot windows.') // Changed to log
-  screenshotWindows.forEach((win) => {
+function closeAllOverlayWindows() {
+  console.log(`Closing ${activeOverlayWindows.size} overlay window(s).`)
+  activeOverlayWindows.forEach((win) => {
     if (win && !win.isDestroyed()) {
-      win.destroy()
+      win.close()
     }
   })
-  screenshotWindows.clear() // Clear the map
+  activeOverlayWindows.clear()
 }
-
-// Add this near your other ipcMain handlers
-ipcMain.on('screenshot-window-ready', (event) => {
-  const win = BrowserWindow.fromWebContents(event.sender)
-  if (win) {
-    win.show()
-    win.focus()
-  }
-})
 
 app.whenReady().then(() => {
   // APP_BASE_PATH is still useful for assets like 'icon.png' that are copied to the app root/resources
@@ -612,7 +592,7 @@ app.whenReady().then(() => {
       mainWindow.destroy()
       mainWindow = null
     }
-    closeAllScreenshotWindows() // Ensure all screenshot windows are closed
+
     app.quit()
   })
 
@@ -627,6 +607,179 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow() // Call createMainWindow
   })
+
+  ipcMain.on('open-overlay-window', () => {
+    if (!overlayWindow) {
+      createOverlayWindow()
+    } else {
+      overlayWindow.focus() // If already open, just focus it
+    }
+  })
+
+  // Listen for the renderer's request to close itself
+  ipcMain.on('close-overlay-from-renderer', () => {
+    if (overlayWindow) {
+      overlayWindow.close()
+    }
+  })
+
+  ipcMain.on('capture-region', async (event, receivedLogicalRegion) => {
+    if (overlayWindow) {
+      overlayWindow.close()
+    }
+    console.log('Region received in main (logical pixels):', receivedLogicalRegion)
+
+    try {
+      const allDisplays = screen.getAllDisplays()
+      console.log('Electron screen.getAllDisplays():', JSON.stringify(allDisplays, null, 2))
+
+      const sources = await desktopCapturer.getSources({
+        types: ['screen'],
+        thumbnailSize: { width: 3000, height: 2000 } // Request full resolution
+      })
+
+      // --- LOG ALL DETECTED SOURCES ---
+      console.log(`desktopCapturer found ${sources.length} screen source(s):`)
+      sources.forEach((source) => {
+        const sourceImageSize = source.thumbnail.getSize()
+        console.log(
+          `  Source ID: ${source.id}, Name: ${source.name}, display_id: ${source.display_id || 'N/A'}, Thumbnail Size: ${sourceImageSize.width}x${sourceImageSize.height}, Is Empty: ${source.thumbnail.isEmpty()}`
+        )
+      })
+      // --- END LOG ALL SOURCES ---
+
+      const primaryDisplay = screen.getPrimaryDisplay()
+      // Ensure consistent string comparison for display_id, though it might be undefined on some sources
+      const primaryDisplaySource = sources.find(
+        (s) => s.display_id && String(s.display_id) === String(primaryDisplay.id)
+      )
+
+      if (!primaryDisplaySource) {
+        console.error(
+          `Primary display source (ID: ${primaryDisplay.id}) NOT found among desktopCapturer sources that have a matching display_id. Will try falling back to the first screen source if available.`
+        )
+        // Fallback strategy: if the specific primary isn't found by display_id,
+        // what is sources[0]? This part needs careful consideration.
+        // For now, if it's not found, we should probably error out or log which source IS being used.
+        if (sources.length > 0) {
+          console.log(
+            `Using the first available source as a fallback: ID ${sources[0].id}, Name: ${sources[0].name}`
+          )
+          // primaryDisplaySource = sources[0]; // Re-enable this line if you want to test with the first available source
+        } else {
+          console.error('No screen sources found by desktopCapturer at all.')
+          if (mainWindow)
+            mainWindow.webContents.send('screenshot-error', 'No screen sources available.')
+          return
+        }
+        // If primaryDisplaySource is still null here after attempting fallback, exit
+        if (!primaryDisplaySource) {
+          console.error('Could not determine a valid screen source to capture.')
+          if (mainWindow)
+            mainWindow.webContents.send('screenshot-error', 'Could not determine screen source.')
+          return
+        }
+      }
+
+      const fullScreenImage = primaryDisplaySource.thumbnail
+      const imageSize = fullScreenImage.getSize()
+      const physicalImageWidth = imageSize.width
+      const physicalImageHeight = imageSize.height
+      const scaleFactor = primaryDisplay.scaleFactor // Get scaleFactor from the Electron 'screen' module's primaryDisplay object
+
+      console.log('--- Screenshot Debug Info (Post-Source Selection) ---')
+      console.log(
+        'Primary Display (from screen module) ID:',
+        primaryDisplay.id,
+        'Bounds:',
+        primaryDisplay.bounds,
+        'Size:',
+        primaryDisplay.size
+      )
+      console.log(
+        'Selected Display Source for Capture: ID:',
+        primaryDisplaySource.id,
+        'Name:',
+        primaryDisplaySource.name,
+        'display_id:',
+        primaryDisplaySource.display_id
+      )
+      console.log('Returned NativeImage physical size (from selected source):', imageSize) // VERY IMPORTANT!
+      console.log('Selected Display Scale Factor:', scaleFactor)
+      console.log('Received logical region:', receivedLogicalRegion)
+
+      if (physicalImageWidth === 0 || physicalImageHeight === 0) {
+        console.error(
+          'ERROR: Selected desktopCapturer source returned an image with zero width or height.'
+        )
+        if (mainWindow)
+          mainWindow.webContents.send(
+            'screenshot-error',
+            'Failed to capture screen image (zero dimensions from selected source).'
+          )
+        return
+      }
+
+      // ... (rest of your scaling and cropping logic from the previous good version) ...
+      // Adjust received region coordinates by scaleFactor for physical pixels
+      const physicalRegion = {
+        x: Math.floor(receivedLogicalRegion.x * scaleFactor),
+        y: Math.floor(receivedLogicalRegion.y * scaleFactor),
+        width: Math.floor(receivedLogicalRegion.width * scaleFactor),
+        height: Math.floor(receivedLogicalRegion.height * scaleFactor)
+      }
+      console.log('Calculated physical region:', physicalRegion)
+
+      let cropX = physicalRegion.x
+      let cropY = physicalRegion.y
+      let cropWidth = physicalRegion.width
+      let cropHeight = physicalRegion.height
+
+      cropX = Math.max(0, Math.min(cropX, physicalImageWidth - 1))
+      cropY = Math.max(0, Math.min(cropY, physicalImageHeight - 1))
+
+      cropWidth = Math.max(0, Math.min(physicalRegion.width, physicalImageWidth - cropX))
+      cropHeight = Math.max(0, Math.min(physicalRegion.height, physicalImageHeight - cropY))
+
+      const finalCropRect = { x: cropX, y: cropY, width: cropWidth, height: cropHeight }
+      console.log('Final crop rectangle for NativeImage.crop (physical pixels):', finalCropRect)
+
+      if (finalCropRect.width <= 0 || finalCropRect.height <= 0) {
+        console.error(
+          'FATAL: Calculated crop rectangle has zero or negative width/height.',
+          finalCropRect
+        )
+        if (mainWindow)
+          mainWindow.webContents.send(
+            'screenshot-error',
+            `Invalid crop dimensions: W ${finalCropRect.width}, H ${finalCropRect.height}. Image size: ${physicalImageWidth}x${physicalImageHeight}. Scaled region: ${JSON.stringify(physicalRegion)}`
+          )
+        return
+      }
+
+      const croppedImage = fullScreenImage.crop(finalCropRect)
+
+      if (croppedImage.isEmpty()) {
+        console.error('ERROR: Cropped image is empty.')
+        if (mainWindow) mainWindow.webContents.send('screenshot-error', 'Cropped image is empty.')
+        return
+      }
+      console.log('Cropped image successful. Size:', croppedImage.getSize())
+
+      const dataURL = croppedImage.toDataURL()
+      if (mainWindow) {
+        mainWindow.webContents.send('screenshot-taken', dataURL)
+        console.log('Screenshot processed and dataURL sent to renderer.')
+      } else {
+        console.warn('Main window not found, cannot send screenshot back to renderer.')
+      }
+    } catch (e) {
+      console.error('Error during screenshot capture process:', e)
+      if (mainWindow) mainWindow.webContents.send('screenshot-error', e.message)
+    }
+  })
+
+  //END OF WINDOW.READY
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -635,129 +788,6 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
-  }
-})
-
-console.log('[main] Registering ipcMain.handle for get-desktop-sources.')
-ipcMain.handle('get-desktop-sources', async (event, opts) => {
-  console.log('[main] Received request for desktop sources.')
-  try {
-    const sources = await desktopCapturer.getSources(opts)
-    console.log(`[main] Found ${sources.length} desktop sources.`)
-    return sources
-  } catch (error) {
-    console.error('[main] Error getting desktop sources:', error)
-    throw error
-  }
-})
-
-// IPC handler to initiate screenshot process from the main renderer
-ipcMain.on('take-screenshot', async (event, billId) => {
-  console.log(`[main] Received take-screenshot request for billId: ${billId}`)
-  activeBillIdForScreenshot = billId // Store the billId for the session
-
-  try {
-    if (!APP_BASE_PATH) {
-      console.error('[main] APP_BASE_PATH is not set. Electron app might not be fully ready.')
-      if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
-        mainWindow.webContents.send('screenshot-taken', null, billId)
-      }
-      return
-    }
-
-    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
-      mainWindow.hide()
-      console.log('[main] mainWindow hidden for screenshot.')
-    }
-
-    // --- CHANGE: Create a screenshot window for EACH display ---
-    const allDisplays = screen.getAllDisplays()
-    if (allDisplays.length === 0) {
-      console.error('[main] No displays found to create screenshot windows.')
-      if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
-        mainWindow.webContents.send('screenshot-taken', null, billId)
-      }
-      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-        mainWindow.show()
-        console.log('[main] mainWindow shown as no displays found.')
-      }
-      return
-    }
-
-    // Close any existing screenshot windows before creating new ones
-    closeAllScreenshotWindows()
-
-    for (const display of allDisplays) {
-      await createScreenshotWindowForDisplay(display, billId)
-    }
-    console.log(`[main] Created ${screenshotWindows.size} screenshot windows.`)
-  } catch (error) {
-    console.error('[main] Error in take-screenshot IPC handler:', error)
-    if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
-      mainWindow.webContents.send('screenshot-taken', null, billId)
-    }
-    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-      mainWindow.show()
-      console.log('[main] mainWindow shown on general error.')
-    }
-    closeAllScreenshotWindows() // Ensure windows are closed on error
-  }
-})
-
-// IPC handler to receive selected region and captured image data from ANY screenshot window
-ipcMain.on(
-  'screenshot-region-selected',
-  async (event, { x, y, width, height, sourceId, billId, dataUrl }) => {
-    console.log(`[main] Received screenshot-region-selected from a renderer for billId: ${billId}`)
-    console.log(`[main] Selection coordinates: x=${x}, y=${y}, width=${width}, height=${height}`)
-    console.log(
-      `[main] Received dataUrl length from renderer: ${dataUrl ? dataUrl.length : 'null'}`
-    )
-
-    // Close all screenshot windows regardless of which one sent the signal
-    closeAllScreenshotWindows()
-
-    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-      mainWindow.show()
-      console.log('[main] mainWindow shown after successful selection.')
-    }
-
-    try {
-      if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
-        mainWindow.webContents.send('screenshot-taken', dataUrl, billId) // Send the received dataUrl
-      }
-
-      console.log('[main] Screenshot processed and sent to main window.')
-    } catch (error) {
-      console.error('[main] Error in screenshot-region-selected IPC handler:', error)
-      if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
-        mainWindow.webContents.send('screenshot-taken', null, billId)
-      }
-      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-        mainWindow.show()
-        console.log('[main] mainWindow shown on error in selection handler.')
-      }
-    }
-  }
-)
-
-// IPC handler to cancel screenshot selection from ANY screenshot window
-ipcMain.on('cancel-screenshot-selection', (event, billId) => {
-  console.log(`[main] Received cancel-screenshot-selection from a renderer for billId: ${billId}`)
-  // --- TEMPORARY DEBUGGING FIX: DO NOT HIDE WINDOW ---
-  // if (screenshotWindows && !screenshotWindows.isDestroyed()) {
-  //   screenshotWindow.hide();
-  //   console.log('[main] screenshotWindow hidden on cancel.');
-  // }
-  console.log('[main] DEBUGGING: Screenshot windows are NOT hidden on cancel to allow inspection.')
-  // --- END TEMPORARY DEBUGGING FIX ---
-
-  if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
-    mainWindow.webContents.send('screenshot-taken', null, billId)
-  }
-  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-    mainWindow.show()
-    console.log('[main] mainWindow shown after cancellation.')
   }
 })
 

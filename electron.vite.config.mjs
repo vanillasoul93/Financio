@@ -14,10 +14,7 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/preload/index.js'), // Assuming this is your main preload script
-          screenshotSelectionPreload: resolve(
-            __dirname,
-            'src/preload/screenshotSelectionPreload.js'
-          ) // Add this line, assuming file is moved
+          overlayPreload: resolve(__dirname, 'src/preload/overlayPreload.js') // Add this line, assuming file is moved
         }
       }
     }
@@ -40,11 +37,8 @@ export default defineConfig({
           // Using absolute paths for input, resolved from the config file's directory.
           // This explicitly tells Vite/Rollup where to find the HTML files.
           index: resolve(__dirname, 'src/renderer/index.html'),
-          screenshotSelection: resolve(__dirname, 'src/renderer/screenshotSelection.html'),
-          screenshotSelectionRenderer: resolve(
-            __dirname,
-            'src/renderer/screenshotSelectionRenderer.js'
-          )
+          overlay: resolve(__dirname, 'src/renderer/overlay.html'),
+          overlayRenderer: resolve(__dirname, 'src/renderer/overlayRenderer.js')
         }
       }
     }
