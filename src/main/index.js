@@ -93,7 +93,9 @@ function createMainWindow() {
 
 // --- NEW FUNCTION: Create a screenshot window for a specific display ---
 async function createScreenshotWindowForDisplay(display, billId) {
-  console.log(`Creating screenshot window for display ${display.id}`)
+  console.log(
+    `[main] Creating screenshotWindow for display ID: ${display.id} (Bounds: ${JSON.stringify(display.bounds)})`
+  )
 
   const screenshotWin = new BrowserWindow({
     x: display.bounds.x,
@@ -103,60 +105,63 @@ async function createScreenshotWindowForDisplay(display, billId) {
     transparent: true,
     frame: false,
     alwaysOnTop: true,
-    fullscreen: false,
-    show: false, // Don't show immediately
+    fullscreen: false, // We set custom bounds, not fullscreen mode
     webPreferences: {
       preload: path.join(__dirname, '../preload', 'screenshotSelectionPreload.js'),
       nodeIntegration: false,
-      contextIsolation: true,
-      webgl: false,
-      backgroundThrottling: false // Prevent throttling when window is hidden
+      contextIsolation: true
     }
   })
 
-  // Prevent the window from being garbage collected
-  screenshotWindows.set(display.id, screenshotWin)
+  if (!screenshotWin) {
+    console.error(`[main] Failed to create screenshotWin for display ID: ${display.id}`)
+    return null
+  }
 
   screenshotWin.loadFile(path.join(__dirname, '../renderer', 'screenshotSelection.html'))
 
+  screenshotWin.webContents.openDevTools() // Keep open for debugging each window
+
   screenshotWin.on('closed', () => {
-    screenshotWindows.delete(display.id)
+    console.log(`[main] screenshotWindow for display ID: ${display.id} closed.`)
+    screenshotWindows.delete(display.id) // Remove from our map
   })
 
-  screenshotWin.once('ready-to-show', async () => {
-    try {
-      const sources = await desktopCapturer.getSources({ types: ['screen'] })
-      const displaySource = sources.find((source) => source.display_id === display.id.toString())
+  screenshotWin.on('ready-to-show', async () => {
+    // Get the desktopCapturer source ID for this specific display
+    const sources = await desktopCapturer.getSources({ types: ['screen'] })
+    const displaySource = sources.find((source) => source.display_id === display.id.toString())
 
-      if (displaySource) {
-        screenshotWin.webContents.send('start-capture-stream', displaySource.id, billId)
-        screenshotWin.show()
-
-        // Focus the window after a small delay
-        setTimeout(() => {
-          if (!screenshotWin.isDestroyed()) {
-            screenshotWin.focus()
-            screenshotWin.setAlwaysOnTop(true, 'screen-saver')
-          }
-        }, 100)
-      } else {
-        console.error(`No source found for display ${display.id}`)
-        screenshotWin.close()
-      }
-    } catch (error) {
-      console.error('Error getting sources:', error)
-      screenshotWin.close()
+    if (displaySource) {
+      console.log(
+        `[main] Sending start-capture-stream to renderer for display ID: ${display.id}, source ID: ${displaySource.id}`
+      )
+      // Send the specific source ID for this display to its renderer
+      screenshotWin.webContents.send('start-capture-stream', displaySource.id, billId)
+      screenshotWin.show()
+      screenshotWin.focus() // Ensure the window gets focus
+      console.log(`[main] screenshotWindow for display ID: ${display.id} shown and focused.`)
+    } else {
+      console.error(
+        `[main] Desktop capturer source not found for display ID: ${display.id}. Closing window.`
+      )
+      screenshotWin.destroy() // Close this window if source not found
     }
   })
 
-  // Prevent the window from losing focus
-  screenshotWin.on('blur', () => {
-    if (!screenshotWin.isDestroyed()) {
-      screenshotWin.focus()
-    }
-  })
-
+  screenshotWindows.set(display.id, screenshotWin) // Add to our map
   return screenshotWin
+}
+
+// --- NEW FUNCTION: Close all active screenshot windows ---
+function closeAllScreenshotWindows() {
+  console.log('[main] Closing all screenshot windows.') // Changed to log
+  screenshotWindows.forEach((win) => {
+    if (win && !win.isDestroyed()) {
+      win.destroy()
+    }
+  })
+  screenshotWindows.clear() // Clear the map
 }
 
 // Add this near your other ipcMain handlers
@@ -167,17 +172,6 @@ ipcMain.on('screenshot-window-ready', (event) => {
     win.focus()
   }
 })
-
-// --- NEW FUNCTION: Close all active screenshot windows ---
-function closeAllScreenshotWindows() {
-  console.log('[main] Closing all screenshot windows.')
-  screenshotWindows.forEach((win) => {
-    if (win && !win.isDestroyed()) {
-      win.destroy()
-    }
-  })
-  screenshotWindows.clear() // Clear the map
-}
 
 app.whenReady().then(() => {
   // APP_BASE_PATH is still useful for assets like 'icon.png' that are copied to the app root/resources
@@ -710,46 +704,39 @@ ipcMain.on('take-screenshot', async (event, billId) => {
   }
 })
 
-// In your ipcMain handler for 'screenshot-region-selected'
+// IPC handler to receive selected region and captured image data from ANY screenshot window
 ipcMain.on(
   'screenshot-region-selected',
-  async (event, { x, y, width, height, sourceId, billId }) => {
+  async (event, { x, y, width, height, sourceId, billId, dataUrl }) => {
+    console.log(`[main] Received screenshot-region-selected from a renderer for billId: ${billId}`)
+    console.log(`[main] Selection coordinates: x=${x}, y=${y}, width=${width}, height=${height}`)
+    console.log(
+      `[main] Received dataUrl length from renderer: ${dataUrl ? dataUrl.length : 'null'}`
+    )
+
+    // Close all screenshot windows regardless of which one sent the signal
+    closeAllScreenshotWindows()
+
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show()
+      console.log('[main] mainWindow shown after successful selection.')
+    }
+
     try {
-      // Get the native image directly from the display
-      const display = screen.getAllDisplays().find((d) => d.id.toString() === sourceId)
-      if (!display) throw new Error('Display not found')
+      if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
+        mainWindow.webContents.send('screenshot-taken', dataUrl, billId) // Send the received dataUrl
+      }
 
-      const nativeImage = await desktopCapturer
-        .getSources({
-          types: ['screen'],
-          thumbnailSize: {
-            width: display.bounds.width,
-            height: display.bounds.height
-          }
-        })
-        .then((sources) => {
-          const source = sources.find((s) => s.display_id === sourceId)
-          return source ? source.thumbnail : null
-        })
-
-      if (!nativeImage) throw new Error('Failed to capture screen')
-
-      // Crop the image to the selected region
-      const croppedImage = nativeImage.crop({
-        x: Math.max(0, x),
-        y: Math.max(0, y),
-        width: Math.min(width, nativeImage.getSize().width - x),
-        height: Math.min(height, nativeImage.getSize().height - y)
-      })
-
-      const dataUrl = croppedImage.toDataURL()
-      mainWindow.webContents.send('screenshot-taken', dataUrl, billId)
+      console.log('[main] Screenshot processed and sent to main window.')
     } catch (error) {
-      console.error('Screenshot error:', error)
-      mainWindow.webContents.send('screenshot-taken', null, billId)
-    } finally {
-      closeAllScreenshotWindows()
-      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show()
+      console.error('[main] Error in screenshot-region-selected IPC handler:', error)
+      if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
+        mainWindow.webContents.send('screenshot-taken', null, billId)
+      }
+      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+        mainWindow.show()
+        console.log('[main] mainWindow shown on error in selection handler.')
+      }
     }
   }
 )
@@ -757,14 +744,13 @@ ipcMain.on(
 // IPC handler to cancel screenshot selection from ANY screenshot window
 ipcMain.on('cancel-screenshot-selection', (event, billId) => {
   console.log(`[main] Received cancel-screenshot-selection from a renderer for billId: ${billId}`)
-  if (screenshotWindows.size > 0) {
-    // Check if any screenshot windows are open
-    closeAllScreenshotWindows() // Re-enable closing all screenshot windows on cancel
-    console.log('[main] screenshot windows hidden/closed on cancel.')
-  }
-
-  // Close all screenshot windows regardless of which one sent the signal
-  // closeAllScreenshotWindows(); // Keep commented out for debugging
+  // --- TEMPORARY DEBUGGING FIX: DO NOT HIDE WINDOW ---
+  // if (screenshotWindows && !screenshotWindows.isDestroyed()) {
+  //   screenshotWindow.hide();
+  //   console.log('[main] screenshotWindow hidden on cancel.');
+  // }
+  console.log('[main] DEBUGGING: Screenshot windows are NOT hidden on cancel to allow inspection.')
+  // --- END TEMPORARY DEBUGGING FIX ---
 
   if (mainWindow && mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
     mainWindow.webContents.send('screenshot-taken', null, billId)
