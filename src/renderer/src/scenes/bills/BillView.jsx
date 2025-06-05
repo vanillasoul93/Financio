@@ -351,10 +351,19 @@ export default function BillView() {
             {'Confirm Delete'}
           </DialogTitle>
           <DialogContent>
-            <DialogContentText id="alert-dialog-description" sx={{ mb: '4px' }}>
+            <DialogContentText id="alert-dialog-description-prefix" sx={{ mb: '4px' }}>
+              {' '}
+              {/* Changed id to avoid duplicate */}
               Are you sure you want to delete
             </DialogContentText>
-            <DialogContentText id="alert-dialog-description" sx={{ mb: '4px' }}>
+            {/* MODIFIED PART: Use component="div" or another appropriate tag for DialogContentText */}
+            <DialogContentText
+              component="div"
+              id="alert-dialog-description-name"
+              sx={{ mb: '4px' }}
+            >
+              {' '}
+              {/* Changed id */}
               <Box display={'flex'}>
                 <Typography color={colors.greenAccent[400]} variant="h4">
                   {selection.name}
@@ -364,7 +373,9 @@ export default function BillView() {
                 </Typography>
               </Box>
             </DialogContentText>
-            <DialogContentText id="alert-dialog-description">
+            <DialogContentText id="alert-dialog-description-suffix">
+              {' '}
+              {/* Changed id */}
               This action cannot be undone.
             </DialogContentText>
           </DialogContent>

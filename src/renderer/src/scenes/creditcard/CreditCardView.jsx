@@ -400,14 +400,23 @@ export default function CreditCardView() {
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle variant="h4" id="alert-dialog-title">
+          <DialogTitle id="alert-dialog-title" sx={{ mt: '8px', mb: '8px' }}>
             {'Confirm Delete'}
           </DialogTitle>
           <DialogContent>
-            <DialogContentText variant="h5" id="alert-dialog-description">
+            <DialogContentText id="alert-dialog-description-prefix" sx={{ mb: '4px' }}>
+              {' '}
+              {/* Changed id to avoid duplicate */}
               Are you sure you want to delete
             </DialogContentText>
-            <DialogContentText id="alert-dialog-description">
+            {/* MODIFIED PART: Use component="div" or another appropriate tag for DialogContentText */}
+            <DialogContentText
+              component="div"
+              id="alert-dialog-description-name"
+              sx={{ mb: '4px' }}
+            >
+              {' '}
+              {/* Changed id */}
               <Box display={'flex'}>
                 <Typography color={colors.greenAccent[400]} variant="h4">
                   {selection.name}
@@ -417,7 +426,9 @@ export default function CreditCardView() {
                 </Typography>
               </Box>
             </DialogContentText>
-            <DialogContentText variant="h5" id="alert-dialog-description">
+            <DialogContentText id="alert-dialog-description-suffix">
+              {' '}
+              {/* Changed id */}
               This action cannot be undone.
             </DialogContentText>
           </DialogContent>
