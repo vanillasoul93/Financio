@@ -347,11 +347,11 @@ export default function BillView() {
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle variant="h4" id="alert-dialog-title" sx={{ mt: '8px', mb: '8px' }}>
+          <DialogTitle id="alert-dialog-title" sx={{ mt: '8px', mb: '8px' }}>
             {'Confirm Delete'}
           </DialogTitle>
           <DialogContent>
-            <DialogContentText variant="h5" id="alert-dialog-description" sx={{ mb: '4px' }}>
+            <DialogContentText id="alert-dialog-description" sx={{ mb: '4px' }}>
               Are you sure you want to delete
             </DialogContentText>
             <DialogContentText id="alert-dialog-description" sx={{ mb: '4px' }}>
@@ -364,7 +364,7 @@ export default function BillView() {
                 </Typography>
               </Box>
             </DialogContentText>
-            <DialogContentText variant="h5" id="alert-dialog-description">
+            <DialogContentText id="alert-dialog-description">
               This action cannot be undone.
             </DialogContentText>
           </DialogContent>
