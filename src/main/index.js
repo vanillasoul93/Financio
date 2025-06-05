@@ -89,60 +89,6 @@ function createMainWindow() {
   console.log('mainWindow created successfully.')
 }
 
-function createOverlayWindow() {
-  // 1. Get the primary display's information
-  const primaryDisplay = screen.getPrimaryDisplay()
-  const { width, height } = primaryDisplay.size // Gets the resolution (e.g., 1920x1080)
-  const { x, y } = primaryDisplay.bounds // Gets the top-left coordinates of the display
-
-  console.log('Main process __dirname for overlay creation:', __dirname) // For path debugging
-  console.log(`Primary display dimensions: ${width}x${height} at (${x},${y})`)
-
-  overlayWindow = new BrowserWindow({
-    // 2. Set window size and position to cover the entire monitor
-    x: x, // Use bounds.x for multi-monitor or non-standard primary display setups
-    y: y, // Use bounds.y
-    width: width,
-    height: height,
-
-    // 3. Remove window border and title bar
-    frame: false,
-
-    // --- Other useful options for an overlay ---
-    transparent: true, // Makes parts of the window transparent (if your HTML/CSS allows)
-    alwaysOnTop: true, // Keeps the overlay on top of other applications
-    skipTaskbar: true, // Prevents the window from appearing in the taskbar
-    focusable: true, // Allows the window to receive focus and capture mouse/keyboard events
-    // webContents: {
-    //   openDevTools: true // Optional: for debugging the overlay window itself
-    // },
-    webPreferences: {
-      preload: path.join(__dirname, '../preload/overlayPreload.js'), // Corrected path
-      contextIsolation: true,
-      nodeIntegration: false,
-      devTools: true // Enables DevTools in the overlay renderer if needed for debugging
-    }
-  })
-
-  const overlayHtmlPath = path.join(__dirname, '../renderer/overlay.html') // Corrected path
-  console.log('Attempting to load overlay.html from:', overlayHtmlPath)
-  overlayWindow
-    .loadFile(overlayHtmlPath)
-    .then(() => {
-      console.log('Overlay HTML loaded successfully.')
-      // Optionally, ensure it's focused after loading, though 'focusable: true' and being a new window often handles this.
-      // overlayWindow.focus();
-    })
-    .catch((err) => {
-      console.error('Failed to load overlay HTML:', err)
-    })
-
-  overlayWindow.on('closed', () => {
-    console.log('Overlay window closed.')
-    overlayWindow = null
-  })
-}
-
 function closeAllOverlayWindows() {
   console.log(`Closing ${activeOverlayWindows.size} overlay window(s).`)
   activeOverlayWindows.forEach((win) => {
@@ -151,6 +97,17 @@ function closeAllOverlayWindows() {
     }
   })
   activeOverlayWindows.clear()
+  // Show and focus main window AFTER all overlays are signaled to close
+}
+// Helper function to show and focus the main window
+function showAndFocusMainWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    console.log('Showing and focusing mainWindow.')
+    mainWindow.show()
+    mainWindow.focus() // Good practice to refocus after showing
+  } else {
+    console.log('Main window not available to show/focus.')
+  }
 }
 
 app.whenReady().then(() => {
@@ -607,137 +564,223 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow() // Call createMainWindow
   })
-
+  // --- MODIFIED: IPC Handler to open overlays on ALL displays ---
   ipcMain.on('open-overlay-window', () => {
-    if (!overlayWindow) {
-      createOverlayWindow()
-    } else {
-      overlayWindow.focus() // If already open, just focus it
+    if (activeOverlayWindows.size > 0) {
+      console.log('Overlay windows are already open. Focusing them.')
+      activeOverlayWindows.forEach((win) => {
+        if (win && !win.isDestroyed()) win.focus()
+      })
+      return
     }
+
+    // --- HIDE mainWindow before showing overlays ---
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      console.log('Hiding mainWindow.')
+      mainWindow.hide()
+    }
+    // --- END HIDE ---
+
+    const displays = screen.getAllDisplays()
+    if (displays.length === 0) {
+      console.error("No displays found by Electron's screen module.")
+      return
+    }
+    console.log(`Found ${displays.length} display(s). Creating overlays for each.`)
+
+    const overlayHtmlPath = path.join(__dirname, '../renderer/overlay.html') // Define once
+
+    displays.forEach((display) => {
+      console.log(
+        `Creating overlay for display ID: ${display.id} - Bounds: ${JSON.stringify(display.bounds)}`
+      )
+
+      const overlayWin = new BrowserWindow({
+        x: display.bounds.x,
+        y: display.bounds.y,
+        width: display.bounds.width,
+        height: display.bounds.height,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        focusable: true,
+        webPreferences: {
+          preload: path.join(__dirname, '../preload/overlayPreload.js'),
+          contextIsolation: true,
+          nodeIntegration: false,
+          devTools: true // Good, this enables them
+        }
+      })
+
+      // Pass display.id as a query parameter
+      overlayWin
+        .loadFile(overlayHtmlPath, { query: { displayId: String(display.id) } })
+        .then(() => console.log(`Overlay HTML loaded successfully for display ${display.id}`))
+        .catch((err) =>
+          console.error(`Failed to load overlay HTML for display ${display.id}:`, err)
+        )
+
+      // --- ADD THIS LINE TO OPEN DEVTOOLS FOR EACH OVERLAY ---
+      //overlayWin.webContents.openDevTools({ mode: 'detach' })
+      // 'detach' opens DevTools in a separate window, which is usually best for frameless/overlay windows.
+      // You can also try 'undocked'.
+      // --- END ADDITION ---
+
+      activeOverlayWindows.set(overlayWin.id, overlayWin)
+
+      overlayWin.on('closed', () => {
+        console.log(
+          `Overlay window (BrowserWindow ID ${overlayWin.id}, associated with display ${display.id}) closed.`
+        )
+        activeOverlayWindows.delete(overlayWin.id)
+      })
+    })
   })
 
-  // Listen for the renderer's request to close itself
-  ipcMain.on('close-overlay-from-renderer', () => {
-    if (overlayWindow) {
-      overlayWindow.close()
-    }
+  // --- REMOVE or repurpose 'close-overlay-from-renderer' if using explicit cancel ---
+  // ipcMain.on('close-overlay-from-renderer', () => { ... })
+
+  // --- NEW: Handler for explicit cancellation from an overlay ---
+  ipcMain.on('cancel-region-capture', () => {
+    console.log('Region capture explicitly cancelled by user from an overlay.')
+    closeAllOverlayWindows()
+    showAndFocusMainWindow()
   })
 
-  ipcMain.on('capture-region', async (event, receivedLogicalRegion) => {
-    if (overlayWindow) {
-      overlayWindow.close()
+  // --- MODIFIED: IPC Handler for capturing region, now expects displayId ---
+  ipcMain.on('capture-region', async (event, data) => {
+    const { region: receivedLogicalRegion, displayId: targetDisplayIdStr } = data
+
+    if (!receivedLogicalRegion || !targetDisplayIdStr) {
+      console.error('Invalid data received for capture-region:', data)
+      closeAllOverlayWindows()
+      showAndFocusMainWindow()
+      if (mainWindow) mainWindow.webContents.send('screenshot-error', 'Invalid data from overlay.')
+      return
     }
-    console.log('Region received in main (logical pixels):', receivedLogicalRegion)
+
+    console.log(
+      `Region received from display ID ${targetDisplayIdStr} (logical pixels):`,
+      receivedLogicalRegion
+    )
+    closeAllOverlayWindows()
 
     try {
       const allDisplays = screen.getAllDisplays()
-      console.log('Electron screen.getAllDisplays():', JSON.stringify(allDisplays, null, 2))
+      const targetDisplay = allDisplays.find((d) => String(d.id) === targetDisplayIdStr)
 
-      const sources = await desktopCapturer.getSources({
-        types: ['screen'],
-        thumbnailSize: { width: 3000, height: 2000 } // Request full resolution
-      })
-
-      // --- LOG ALL DETECTED SOURCES ---
-      console.log(`desktopCapturer found ${sources.length} screen source(s):`)
-      sources.forEach((source) => {
-        const sourceImageSize = source.thumbnail.getSize()
-        console.log(
-          `  Source ID: ${source.id}, Name: ${source.name}, display_id: ${source.display_id || 'N/A'}, Thumbnail Size: ${sourceImageSize.width}x${sourceImageSize.height}, Is Empty: ${source.thumbnail.isEmpty()}`
-        )
-      })
-      // --- END LOG ALL SOURCES ---
-
-      const primaryDisplay = screen.getPrimaryDisplay()
-      // Ensure consistent string comparison for display_id, though it might be undefined on some sources
-      const primaryDisplaySource = sources.find(
-        (s) => s.display_id && String(s.display_id) === String(primaryDisplay.id)
-      )
-
-      if (!primaryDisplaySource) {
-        console.error(
-          `Primary display source (ID: ${primaryDisplay.id}) NOT found among desktopCapturer sources that have a matching display_id. Will try falling back to the first screen source if available.`
-        )
-        // Fallback strategy: if the specific primary isn't found by display_id,
-        // what is sources[0]? This part needs careful consideration.
-        // For now, if it's not found, we should probably error out or log which source IS being used.
-        if (sources.length > 0) {
-          console.log(
-            `Using the first available source as a fallback: ID ${sources[0].id}, Name: ${sources[0].name}`
-          )
-          // primaryDisplaySource = sources[0]; // Re-enable this line if you want to test with the first available source
-        } else {
-          console.error('No screen sources found by desktopCapturer at all.')
-          if (mainWindow)
-            mainWindow.webContents.send('screenshot-error', 'No screen sources available.')
-          return
-        }
-        // If primaryDisplaySource is still null here after attempting fallback, exit
-        if (!primaryDisplaySource) {
-          console.error('Could not determine a valid screen source to capture.')
-          if (mainWindow)
-            mainWindow.webContents.send('screenshot-error', 'Could not determine screen source.')
-          return
-        }
-      }
-
-      const fullScreenImage = primaryDisplaySource.thumbnail
-      const imageSize = fullScreenImage.getSize()
-      const physicalImageWidth = imageSize.width
-      const physicalImageHeight = imageSize.height
-      const scaleFactor = primaryDisplay.scaleFactor // Get scaleFactor from the Electron 'screen' module's primaryDisplay object
-
-      console.log('--- Screenshot Debug Info (Post-Source Selection) ---')
-      console.log(
-        'Primary Display (from screen module) ID:',
-        primaryDisplay.id,
-        'Bounds:',
-        primaryDisplay.bounds,
-        'Size:',
-        primaryDisplay.size
-      )
-      console.log(
-        'Selected Display Source for Capture: ID:',
-        primaryDisplaySource.id,
-        'Name:',
-        primaryDisplaySource.name,
-        'display_id:',
-        primaryDisplaySource.display_id
-      )
-      console.log('Returned NativeImage physical size (from selected source):', imageSize) // VERY IMPORTANT!
-      console.log('Selected Display Scale Factor:', scaleFactor)
-      console.log('Received logical region:', receivedLogicalRegion)
-
-      if (physicalImageWidth === 0 || physicalImageHeight === 0) {
-        console.error(
-          'ERROR: Selected desktopCapturer source returned an image with zero width or height.'
-        )
+      if (!targetDisplay) {
+        console.error(`Target display with ID ${targetDisplayIdStr} not found.`)
         if (mainWindow)
           mainWindow.webContents.send(
             'screenshot-error',
-            'Failed to capture screen image (zero dimensions from selected source).'
+            `Display ${targetDisplayIdStr} not found.`
+          )
+        return
+      }
+      console.log(
+        `Target display identified: ID=${targetDisplay.id}, Bounds=${JSON.stringify(targetDisplay.bounds)}, Size (logical)=${JSON.stringify(targetDisplay.size)}, ScaleFactor=${targetDisplay.scaleFactor}`
+      )
+
+      // --- DYNAMIC THUMBNAIL SIZE ---
+      // Calculate the physical resolution of the target display
+      const targetPhysicalWidth = Math.floor(targetDisplay.size.width * targetDisplay.scaleFactor)
+      const targetPhysicalHeight = Math.floor(targetDisplay.size.height * targetDisplay.scaleFactor)
+      console.log(
+        `Requesting screenshot for display ${targetDisplay.id} at physical resolution: ${targetPhysicalWidth}x${targetPhysicalHeight}`
+      )
+
+      const sources = await desktopCapturer.getSources({
+        types: ['screen'],
+        // Request thumbnail at the exact physical resolution of the target display
+        thumbnailSize: { width: targetPhysicalWidth, height: targetPhysicalHeight }
+      })
+      // --- END DYNAMIC THUMBNAIL SIZE ---
+
+      console.log(
+        `desktopCapturer found ${sources.length} screen source(s) with requested tailored thumbnailSize.`
+      )
+      sources.forEach((source) => {
+        /* ... logging sources ... */
+      })
+
+      const targetSource = sources.find(
+        (s) => s.display_id && s.display_id.includes(targetDisplayIdStr)
+      )
+
+      if (!targetSource) {
+        console.error(`DesktopCapturer source not found for display ID ${targetDisplayIdStr}.`)
+        if (mainWindow)
+          mainWindow.webContents.send(
+            'screenshot-error',
+            `Screen source for display ${targetDisplayIdStr} not found.`
           )
         return
       }
 
-      // ... (rest of your scaling and cropping logic from the previous good version) ...
-      // Adjust received region coordinates by scaleFactor for physical pixels
+      const fullScreenImage = targetSource.thumbnail
+      const imageSize = fullScreenImage.getSize() // This should now match targetPhysicalWidth/Height
+      const physicalImageWidth = imageSize.width
+      const physicalImageHeight = imageSize.height
+      // The scaleFactor to use is still targetDisplay.scaleFactor for converting overlay's logical coords
+      const scaleFactor = targetDisplay.scaleFactor
+
+      console.log('--- Screenshot Debug Info (Multi-Display with Dynamic Thumbnail Size) ---')
+      console.log(
+        'Using Source: ID=',
+        targetSource.id,
+        'Name=',
+        targetSource.name,
+        `display_id=${targetSource.display_id}`
+      )
+      console.log(
+        'Returned NativeImage physical size (should match requested physical resolution):',
+        imageSize
+      ) // VERY IMPORTANT!
+      console.log('Target Display Scale Factor:', scaleFactor)
+      console.log('Received logical region (relative to its display):', receivedLogicalRegion)
+
+      if (physicalImageWidth === 0 || physicalImageHeight === 0) {
+        console.error(
+          'ERROR: desktopCapturer returned an image with zero width or height even with specific thumbnail size.'
+        )
+        if (mainWindow)
+          mainWindow.webContents.send(
+            'screenshot-error',
+            'Failed to capture screen image (zero dimensions).'
+          )
+        return
+      }
+      // Optional: Check if physicalImageWidth/Height match targetPhysicalWidth/Height
+      if (
+        physicalImageWidth !== targetPhysicalWidth ||
+        physicalImageHeight !== targetPhysicalHeight
+      ) {
+        console.warn(
+          `Warning: NativeImage size ${physicalImageWidth}x${physicalImageHeight} does not perfectly match requested physical size ${targetPhysicalWidth}x${targetPhysicalHeight}. Cropping will proceed based on actual image size.`
+        )
+      }
+
+      // Physical region coordinates are calculated from the logical region using the target display's scale factor
       const physicalRegion = {
         x: Math.floor(receivedLogicalRegion.x * scaleFactor),
         y: Math.floor(receivedLogicalRegion.y * scaleFactor),
         width: Math.floor(receivedLogicalRegion.width * scaleFactor),
         height: Math.floor(receivedLogicalRegion.height * scaleFactor)
       }
-      console.log('Calculated physical region:', physicalRegion)
+      console.log('Calculated physical region for target display:', physicalRegion)
 
+      // Crop rectangle calculation (ensure it's within the actual physicalImageWidth/Height)
       let cropX = physicalRegion.x
       let cropY = physicalRegion.y
       let cropWidth = physicalRegion.width
       let cropHeight = physicalRegion.height
 
-      cropX = Math.max(0, Math.min(cropX, physicalImageWidth - 1))
-      cropY = Math.max(0, Math.min(cropY, physicalImageHeight - 1))
+      cropX = Math.max(0, Math.min(cropX, physicalImageWidth - 1)) // Ensure cropX is within [0, physicalImageWidth - 1]
+      cropY = Math.max(0, Math.min(cropY, physicalImageHeight - 1)) // Ensure cropY is within [0, physicalImageHeight - 1]
 
+      // Width/Height should not extend beyond the image boundaries from the (potentially adjusted) cropX/cropY
       cropWidth = Math.max(0, Math.min(physicalRegion.width, physicalImageWidth - cropX))
       cropHeight = Math.max(0, Math.min(physicalRegion.height, physicalImageHeight - cropY))
 
@@ -752,7 +795,7 @@ app.whenReady().then(() => {
         if (mainWindow)
           mainWindow.webContents.send(
             'screenshot-error',
-            `Invalid crop dimensions: W ${finalCropRect.width}, H ${finalCropRect.height}. Image size: ${physicalImageWidth}x${physicalImageHeight}. Scaled region: ${JSON.stringify(physicalRegion)}`
+            `Invalid crop dimensions on display ${targetDisplay.id}.`
           )
         return
       }
@@ -760,23 +803,28 @@ app.whenReady().then(() => {
       const croppedImage = fullScreenImage.crop(finalCropRect)
 
       if (croppedImage.isEmpty()) {
-        console.error('ERROR: Cropped image is empty.')
+        console.error('ERROR: Cropped image is empty for display ' + targetDisplay.id)
         if (mainWindow) mainWindow.webContents.send('screenshot-error', 'Cropped image is empty.')
         return
       }
-      console.log('Cropped image successful. Size:', croppedImage.getSize())
+      console.log(
+        'Cropped image successful from display ' + targetDisplay.id + '. Size:',
+        croppedImage.getSize()
+      )
 
       const dataURL = croppedImage.toDataURL()
-      if (mainWindow) {
+      if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('screenshot-taken', dataURL)
         console.log('Screenshot processed and dataURL sent to renderer.')
       } else {
-        console.warn('Main window not found, cannot send screenshot back to renderer.')
+        console.warn('Main window not found or destroyed, cannot send screenshot back to renderer.')
       }
     } catch (e) {
-      console.error('Error during screenshot capture process:', e)
-      if (mainWindow) mainWindow.webContents.send('screenshot-error', e.message)
+      console.error('Error during multi-display screenshot capture process:', e)
+      if (mainWindow && !mainWindow.isDestroyed())
+        mainWindow.webContents.send('screenshot-error', e.message)
     }
+    showAndFocusMainWindow()
   })
 
   //END OF WINDOW.READY

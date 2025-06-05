@@ -244,6 +244,7 @@ export default function PayBillView() {
                   flexGrow: 1,
                   overflowY: 'auto',
                   minHeight: 0,
+                  height: 0, // <<< --- ADD THIS LINE ---
                   paddingRight: { xs: 0, md: '8px' } // Responsive padding for scrollbar
                 }}
               >
@@ -316,6 +317,7 @@ export default function PayBillView() {
                   flexGrow: 1,
                   overflowY: 'auto',
                   minHeight: 0,
+                  height: 0, // <<< --- ADD THIS LINE ---
                   paddingRight: { xs: 0, md: '8px' } // Responsive padding for scrollbar
                 }}
               >

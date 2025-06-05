@@ -123,6 +123,7 @@ export default function CreditCardView() {
     //if the data returns succesfully, fetch Bills again
     if (response.success) {
       updateCardList()
+      console.log('THE ID IN THE DB OF THE ADDED CARD IS: ' + response.cardId)
 
       // Optionally, update your React component's state to re-render the table
     } else {

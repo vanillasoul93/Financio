@@ -162,6 +162,7 @@ export default function BillView() {
     //if the data returns succesfully, fetch Bills again
     if (response.success) {
       updateBillList()
+      console.log('THE DB ID OF THE NEWLY ADDED BILL IS: ' + response.billId)
 
       // Optionally, update your React component's state to re-render the table
     } else {
