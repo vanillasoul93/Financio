@@ -46,6 +46,19 @@ function initializeDatabase() {
   console.log('Database connection initialized.')
 }
 
+// --- KNEX SETUP ---
+const knex = require('knex')({
+  client: 'sqlite3',
+  connection: {
+    // Store the database file in the user's app data folder.
+    // This is the recommended location for application data.
+    filename: path.join(app.getPath('userData'), 'finance_database.db')
+  },
+  useNullAsDefault: true // Recommended for SQLite
+})
+
+// --- END KNEX SETUP ---
+
 /**
  * Creates and configures the main application window.
  */
@@ -246,7 +259,6 @@ ipcMain.on('open-overlay-window', () => {
       activeOverlayWindows.delete(overlayWin.id)
       if (activeOverlayWindows.size === 0) {
         console.log('All overlay windows are now closed. Showing main window.')
-        showAndFocusMainWindow()
       }
     })
   })
@@ -255,6 +267,7 @@ ipcMain.on('open-overlay-window', () => {
 ipcMain.on('cancel-region-capture', () => {
   console.log('Region capture cancelled by user.')
   closeAllOverlayWindows() // This will trigger the 'closed' event chain leading to showAndFocusMainWindow
+  showAndFocusMainWindow()
 })
 
 ipcMain.on('capture-region', async (event, data) => {
@@ -263,6 +276,7 @@ ipcMain.on('capture-region', async (event, data) => {
   if (!receivedLogicalRegion || !targetDisplayIdStr) {
     console.error('Invalid data received for capture-region:', data)
     closeAllOverlayWindows() // Triggers showing main window
+    showAndFocusMainWindow()
     if (mainWindow && !mainWindow.isDestroyed())
       mainWindow.webContents.send('screenshot-error', 'Invalid data from overlay.')
     return
@@ -279,6 +293,7 @@ ipcMain.on('capture-region', async (event, data) => {
       console.error(`Target display with ID ${targetDisplayIdStr} not found.`)
       if (mainWindow && !mainWindow.isDestroyed())
         mainWindow.webContents.send('screenshot-error', `Display ${targetDisplayIdStr} not found.`)
+      showAndFocusMainWindow()
       return // showAndFocusMainWindow already called via closeAllOverlayWindows
     }
 
@@ -342,8 +357,10 @@ ipcMain.on('capture-region', async (event, data) => {
         'FATAL: Calculated crop rectangle has zero or negative dimensions.',
         finalCropRect
       )
+      showAndFocusMainWindow()
       if (mainWindow && !mainWindow.isDestroyed())
         mainWindow.webContents.send('screenshot-error', 'Invalid crop dimensions.')
+      showAndFocusMainWindow()
       return
     }
     console.log('Final crop rectangle (physical pixels):', finalCropRect)
@@ -353,6 +370,7 @@ ipcMain.on('capture-region', async (event, data) => {
       console.error('ERROR: Cropped image is empty.')
       if (mainWindow && !mainWindow.isDestroyed())
         mainWindow.webContents.send('screenshot-error', 'Cropped image is empty.')
+      showAndFocusMainWindow()
       return
     }
     console.log('Cropped image successful. Size:', croppedImage.getSize())
@@ -361,9 +379,11 @@ ipcMain.on('capture-region', async (event, data) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('screenshot-taken', dataURL)
       console.log('Screenshot processed and dataURL sent to renderer.')
+      showAndFocusMainWindow()
     }
   } catch (error) {
     console.error('Error during screenshot capture:', error)
+    showAndFocusMainWindow()
     if (mainWindow && !mainWindow.isDestroyed())
       mainWindow.webContents.send('screenshot-error', error.message)
   }
