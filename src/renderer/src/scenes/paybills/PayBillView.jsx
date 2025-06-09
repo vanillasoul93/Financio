@@ -209,6 +209,14 @@ export default function PayBillView() {
               }}
             >
               {/* Header for Bills Column (fixed at top) */}
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                color={colors.grey[100]}
+                sx={{ marginBottom: '8px', paddingLeft: '16px' }}
+              >
+                Bills
+              </Typography>
               <Box
                 sx={{
                   display: 'flex',
@@ -229,15 +237,6 @@ export default function PayBillView() {
                   $2876.45
                 </Typography>
               </Box>
-
-              <Typography
-                variant="h4"
-                fontWeight="bold"
-                color={colors.grey[100]}
-                sx={{ marginBottom: '8px', paddingLeft: '16px' }}
-              >
-                Bills
-              </Typography>
 
               <Box
                 sx={{
@@ -284,6 +283,15 @@ export default function PayBillView() {
                 paddingLeft: { xs: 0, md: '8px' } // Responsive padding
               }}
             >
+              {/* Header for Credit Cards Column (fixed at top) */}
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                color={colors.grey[100]}
+                sx={{ marginBottom: '8px', paddingLeft: '16px' }}
+              >
+                Credit Cards
+              </Typography>
               <Box
                 sx={{
                   display: 'flex',
@@ -304,14 +312,7 @@ export default function PayBillView() {
                   $854.26
                 </Typography>
               </Box>
-              <Typography
-                variant="h4"
-                fontWeight="bold"
-                color={colors.grey[100]}
-                sx={{ marginBottom: '8px', paddingLeft: '16px' }}
-              >
-                Credit Cards
-              </Typography>
+
               <Box
                 sx={{
                   flexGrow: 1,
