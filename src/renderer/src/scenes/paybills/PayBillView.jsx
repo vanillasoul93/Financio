@@ -260,7 +260,7 @@ export default function PayBillView() {
                         dateDue={bill.date_due}
                         previousAmountPaid={bill.previous_payment}
                         website={bill.website}
-                        onSave={handleSaveBill}
+                        onSave={() => handleSaveBill(bill)}
                         onTakeScreenshot={() => handleTakeScreenshotForBill(bill.id)}
                         confirmationImageUrl={bill.confirmationImageUrl}
                         loadingScreenshot={bill.loadingScreenshot}

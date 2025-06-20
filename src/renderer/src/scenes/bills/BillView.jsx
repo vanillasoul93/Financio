@@ -102,7 +102,8 @@ export default function BillView() {
       headerName: 'Auto-Pay',
       type: 'boolean',
       maxWidth: 100,
-      flex: 1
+      flex: 1,
+      editable: 'false'
     },
     {
       field: 'amount_due',
@@ -272,6 +273,16 @@ export default function BillView() {
               columns={columns}
               style={{ fontSize: '18px' }}
               onRowClick={onRowSelect}
+              isCellEditable={(params) => {
+                // params will still contain the cell information
+                // Check if the cell is in the 'automatic' column
+                if (params.field === 'automatic') {
+                  // Return false to disable editing for this column
+                  return false
+                }
+                // For other columns, return true or your desired logic
+                return true
+              }}
               initialState={{
                 pagination: {
                   paginationModel: {
