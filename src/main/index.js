@@ -52,7 +52,7 @@ const knex = require('knex')({
   connection: {
     // Store the database file in the user's app data folder.
     // This is the recommended location for application data.
-    filename: path.join(app.getPath('userData'), 'finance_database.db')
+    filename: dbPath
   },
   useNullAsDefault: true // Recommended for SQLite
 })
@@ -423,6 +423,28 @@ ipcMain.handle('save-screenshot-to-disk', async (event, { billId, billTitle, ima
 //-------------------------------------------------------------------
 // IPC Handlers: Database Operations
 //-------------------------------------------------------------------
+
+async function getAccountsByType(type) {
+  try {
+    const accounts = await knex('accounts').where('type', type).select('*')
+    return accounts
+  } catch (error) {
+    console.error(`Error fetching ${type} accounts:`, error)
+    throw error // Re-throw to be caught by IPC handler
+  }
+}
+
+// --- IPC Main Handlers ---
+ipcMain.handle('get-accounts-by-type', async (event, type) => {
+  try {
+    const accounts = await getAccountsByType(type)
+    return accounts
+  } catch (error) {
+    console.error(`Failed to fetch accounts of type ${type} in main process:`, error)
+    // Return an error object or null to the renderer
+    return { error: error.message || 'An unknown error occurred' }
+  }
+})
 
 /**
  * Helper function to promisify db.all

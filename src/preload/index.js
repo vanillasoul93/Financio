@@ -40,6 +40,15 @@ if (process.contextIsolated) {
           ipcRenderer.removeListener('received-data', handler)
         }
       },
+      getAccounts: async (type) => {
+        // Send a message to the main process and await the response
+        const result = await ipcRenderer.invoke('get-accounts-by-type', type)
+        if (result && result.error) {
+          console.error('Error from main process:', result.error)
+          throw new Error(result.error) // Re-throw to be caught in React component
+        }
+        return result
+      },
 
       //BillPayment Section
       saveScreenshotToDisk: (billId, billTitle, imageData) =>
