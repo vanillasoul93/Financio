@@ -10,9 +10,14 @@ import {
   useTheme,
   Slide,
   Button,
-  LinearProgress
+  LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from '@mui/material'
 import AccountDatagrid from './AccountDatagrid'
+import AddCheckingForm from './AddCheckingForm'
+import AddCreditCardForm from './AddCreditCardForm'
 import UsageProgressBar from './UsageProgressBar' // Make sure this is imported
 
 // Assume this simulates your Knex data fetching functions
@@ -152,12 +157,49 @@ export default function AccountsView() {
   const [selectedTab, setSelectedTab] = useState(0)
   const [accountsData, setAccountsData] = useState([])
   const [loading, setLoading] = useState(true) // Initialize loading to true
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // 1. State to hold the selection
   const [selectionModel, setSelectionModel] = useState([])
 
+  // Handlers to control the modal's visibility
+  const handleOpenModal = () => setIsModalOpen(true)
+  const handleCloseModal = () => setIsModalOpen(false)
+
   // Map tab index to account type string for DB query
   const tabToAccountType = ['checking', 'credit_card', 'investment', 'savings']
+
+  // This function will be passed to the form components
+  const handleAddAccount = async (formData) => {
+    console.log('Submitting new account:', formData)
+    // Assumes you have an `addAccount` function exposed via your preload script
+    //const result = await window.api.addAccount(formData)
+    if (!result.error) {
+      handleCloseModal() // Close the modal on success
+      fetchData() // Re-fetch the data to update the grid
+    } else {
+      // Handle the error (e.g., show an alert)
+      console.error('Failed to add account:', result.error)
+    }
+  }
+
+  // This helper function returns the correct form component based on the tab
+  const renderModalForm = () => {
+    const accountType = tabToAccountType[selectedTab]
+
+    switch (accountType?.toLowerCase()) {
+      case 'checking':
+      case 'savings': // Assuming savings form is same as checking
+        return <AddCheckingForm onSubmit={handleAddAccount} onCancel={handleCloseModal} />
+      case 'credit card':
+        return <AddCreditCardForm onSubmit={handleAddAccount} onCancel={handleCloseModal} />
+      case 'investment':
+        // You would create and return an <AddInvestmentForm /> here
+        return <p>Investment form coming soon...</p>
+      default:
+        return null
+    }
+  }
 
   // Effect to fetch data when the selectedTab changes
   useEffect(() => {
@@ -210,6 +252,30 @@ export default function AccountsView() {
         return savingsColumns
       default:
         return []
+    }
+  }
+
+  const handleEdit = () => {
+    // 1. Guard clause: Make sure exactly one row is selected.
+    if (selectionModel.length !== 1) return
+
+    // 2. Get the single ID from your selection model state.
+    const selectedId = selectionModel[0]
+
+    // 3. Use the JavaScript .find() method on your main data array
+    //    to find the object where the 'id' matches your selectedId.
+    const selectedRowData = accountsData.find((row) => row.id === selectedId)
+
+    // 4. Now you have the complete data for the selected row!
+    if (selectedRowData) {
+      console.log('Full data for the selected row:', selectedRowData)
+
+      // You can now access all of its properties:
+      console.log('Card Name:', selectedRowData.name)
+      console.log('Current Balance:', selectedRowData.balance)
+      console.log('Credit Limit:', selectedRowData.credit_limit)
+
+      // TODO: Open an edit modal and pass `selectedRowData` to it as a prop.
     }
   }
 
@@ -281,7 +347,20 @@ export default function AccountsView() {
                 <CircularProgress color="white" size={75} />
               </Box>
             ) : (
-              <AccountDatagrid rows={accountsData} columns={getCurrentColumns()} />
+              <AccountDatagrid
+                rows={accountsData}
+                columns={getCurrentColumns()}
+                // This handler works for both checkbox and row clicks.
+                onSelectionModelChange={(newSelectionModel) => {
+                  // Log the new array of IDs that the DataGrid provides.
+                  console.log('Selection changed! New model:', newSelectionModel)
+
+                  // Then, update the state as before.
+                  setSelectionModel(newSelectionModel)
+                }}
+                // This prop correctly shows the selected row(s) by highlighting them.
+                rowSelectionModel={selectionModel}
+              />
             )}
           </Box>
         </Box>
@@ -314,7 +393,7 @@ export default function AccountsView() {
               variant="contained"
               style={{ backgroundColor: colors.blueAccent[600], width: '125px' }}
               size="large"
-              //onClick={() => handleEditCreditCardModal(selection)}
+              onClick={() => handleEdit()}
             >
               Edit
             </Button>
@@ -322,13 +401,17 @@ export default function AccountsView() {
               variant="contained"
               style={{ backgroundColor: colors.greenAccent[600], width: '125px' }}
               size="large"
-              //onClick={handleAddCreditCardModal}
+              onClick={handleOpenModal}
             >
               Add
             </Button>
           </Box>
         </Box>
       </Slide>
+      <Dialog open={isModalOpen} onClose={handleCloseModal}>
+        <DialogTitle>Add New {tabToAccountType[selectedTab]} Account</DialogTitle>
+        <DialogContent>{renderModalForm()}</DialogContent>
+      </Dialog>
     </Box>
   )
 }

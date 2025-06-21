@@ -3,7 +3,7 @@ import { DataGrid } from '@mui/x-data-grid'
 import { Box, useTheme } from '@mui/material'
 import { tokens } from '../../theme'
 
-function AccountDatagrid({ rows, columns }) {
+function AccountDatagrid({ rows, columns, selectionModel, onSelectionModelChange }) {
   const theme = useTheme()
   const colors = tokens(theme.palette.mode)
   return (
@@ -46,6 +46,12 @@ function AccountDatagrid({ rows, columns }) {
       <DataGrid
         rows={rows}
         columns={columns}
+        // This handler is the function passed down from the parent (`setSelectionModel`)
+        // When a row is clicked, it calls the parent's state update function.
+        onRowSelectionModelChange={onSelectionModelChange}
+        // This prop receives the current selection state from the parent.
+        // It tells the grid which rows should have their checkboxes ticked.
+        rowSelectionModel={selectionModel}
         // If you had `autoWidth`, `autoHeight`, remove them as they conflict with flexbox
         // disableColumnMenu // Optional: Disables the column menu entirely
         // disableColumnSelector // Optional: Disables the column selector
