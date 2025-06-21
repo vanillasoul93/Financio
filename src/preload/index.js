@@ -1,3 +1,5 @@
+console.log('--- PRELOAD SCRIPT HAS BEEN LOADED ---')
+
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
@@ -48,6 +50,20 @@ if (process.contextIsolated) {
           throw new Error(result.error) // Re-throw to be caught in React component
         }
         return result
+      },
+      seedInvestments: () => ipcRenderer.invoke('seed-investments'),
+      getInvestmentOverview: async () => {
+        try {
+          const result = await ipcRenderer.invoke('get-investment-overview')
+          if (result && result.error) {
+            console.error('Error from main process:', result.error)
+            throw new Error(result.error)
+          }
+          return result
+        } catch (error) {
+          console.error('Failed to invoke "get-investment-overview":', error)
+          throw error
+        }
       },
 
       //BillPayment Section

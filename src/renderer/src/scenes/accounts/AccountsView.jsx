@@ -30,6 +30,13 @@ export default function AccountsView() {
   const theme = useTheme()
   const colors = tokens(theme.palette.mode)
   // Define column definitions for each account type (unchanged from previous example)
+
+  const openWebsite = () => {
+    window.api.seedInvestments().then((result) => {
+      console.log(result)
+    })
+  }
+
   const checkingColumns = [
     { field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
     { field: 'name', headerName: 'Account Name', flex: 1, maxWidth: 250 },
@@ -55,7 +62,7 @@ export default function AccountsView() {
       valueFormatter: (params) => `$${parseFloat(params).toLocaleString()}`
     },
     {
-      field: 'limit',
+      field: 'credit_limit',
       headerName: 'Credit Limit',
       flex: 1,
       type: 'tel',
@@ -73,7 +80,8 @@ export default function AccountsView() {
       headerName: 'Usage',
       flex: 1,
       renderCell: (value) => {
-        const progressValue = value.row.limit > 0 ? (value.row.balance / value.row.limit) * 100 : 0
+        const progressValue =
+          value.row.credit_limit > 0 ? (value.row.balance / value.row.credit_limit) * 100 : 0
         console.log('Current Progress Value: ' + progressValue)
         let color = colors.blueAccent[400]
         if (progressValue < 15) {
@@ -115,23 +123,11 @@ export default function AccountsView() {
   ]
 
   const investmentColumns = [
-    { field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
-    { field: 'name', headerName: 'Investment Name', flex: 1 },
-    { field: 'type', headerName: 'Type', flex: 1 },
-    {
-      field: 'value',
-      headerName: 'Current Value',
-      flex: 1,
-      type: 'number',
-      valueFormatter: (params) => `$${parseFloat(params).toLocaleString()}`
-    },
-    {
-      field: 'returnRate',
-      headerName: 'Return Rate',
-      flex: 1,
-      type: 'number',
-      valueFormatter: (params) => `${parseFloat(params).toFixed(2)}%`
-    }
+    { field: 'account', headerName: 'Account', flex: 1 },
+    { field: 'current_balance', headerName: 'Cash Balance', type: 'number', flex: 1 },
+    { field: 'amount_invested', headerName: 'Amount Invested', type: 'number', flex: 1 },
+    { field: 'assets_held', headerName: 'Assets Held', type: 'number', flex: 1 },
+    { field: 'investments_made', headerName: 'Investments Made', type: 'number', flex: 1 }
   ]
 
   const savingsColumns = [
@@ -141,14 +137,14 @@ export default function AccountsView() {
       field: 'balance',
       headerName: 'Current Balance',
       flex: 1,
-      type: 'number',
+      type: 'tel',
       valueFormatter: (params) => `$${parseFloat(params).toLocaleString()}`
     },
     {
-      field: 'interestRate',
+      field: 'interest_rate',
       headerName: 'Interest Rate',
       flex: 1,
-      type: 'number',
+      type: 'tel',
       valueFormatter: (params) => `${parseFloat(params).toFixed(2)}%`
     }
   ]
@@ -157,42 +153,46 @@ export default function AccountsView() {
   const [accountsData, setAccountsData] = useState([])
   const [loading, setLoading] = useState(true) // Initialize loading to true
 
+  // 1. State to hold the selection
+  const [selectionModel, setSelectionModel] = useState([])
+
   // Map tab index to account type string for DB query
   const tabToAccountType = ['checking', 'credit_card', 'investment', 'savings']
 
   // Effect to fetch data when the selectedTab changes
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true) // Start loading when a new fetch begins
-      const accountType = tabToAccountType[selectedTab]
+      setLoading(true)
 
-      if (accountType) {
-        try {
-          // Use the exposed API from the preload script
-          const data = await window.api.getAccounts(accountType)
-          // For savings and investments, you might want to add derived fields
-          // For simplicity, we'll assume the basic structure for now.
-          // If you need fields like `interestRate` or `returnRate` for these
-          // and they are not in the DB, you'd calculate them here or in the DB query.
-          setAccountsData(data)
-        } catch (err) {
-          console.error('Failed to fetch accounts in renderer:', err)
-          setError(`Failed to load data: ${err.message}`)
-          setAccountsData([])
-        } finally {
-          setLoading(false)
+      try {
+        const accountType = tabToAccountType[selectedTab]
+        let data
+
+        if (accountType === 'investment') {
+          console.log('Fetching investment overview...')
+          data = await window.api.getInvestmentOverview()
+        } else if (accountType) {
+          console.log(`Fetching accounts for type: ${accountType}`)
+          data = await window.api.getAccounts(accountType)
+        } else {
+          throw new Error('Invalid account type selected.')
         }
-      } else {
-        setLoading(false)
-        setError('Invalid account type selected.')
-      }
 
-      setAccountsData(data)
-      setLoading(false) // End loading once data is fetched
+        // --- ADD THIS LINE TO LOG THE FETCHED DATA ---
+        console.log('Data received in renderer:', data)
+
+        setAccountsData(data || []) // Set the fetched data
+      } catch (err) {
+        console.error('Failed to fetch data in renderer:', err)
+        setError(`Failed to load data: ${err.message}`)
+        setAccountsData([])
+      } finally {
+        setLoading(false)
+      }
     }
 
     fetchData()
-  }, [selectedTab]) // Re-run effect whenever selectedTab changes
+  }, [selectedTab])
 
   const handleChange = (event, newValue) => {
     setSelectedTab(newValue)
@@ -294,7 +294,7 @@ export default function AccountsView() {
             <Button
               variant="contained"
               style={{ backgroundColor: colors.blueAccent[600], width: '125px' }}
-              //onClick={openWebsite}
+              onClick={openWebsite}
               size="large"
             >
               Website

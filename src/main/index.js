@@ -60,6 +60,67 @@ const knex = require('knex')({
 // --- END KNEX SETUP ---
 
 /**
+ * Gets a basic overview for all investment accounts. (FINAL VERSION)
+ * @returns {Promise<Array|{error: string}>}
+ */
+async function getBasicInvestmentOverview() {
+  try {
+    // These CTE definitions are correct and do not need to be changed.
+    const investmentBuys = knex('transactions')
+      .select('account_id')
+      .sum('amount as total_invested_amount')
+      .count('id as total_investment_count')
+      .where('type', 'Investment')
+      .groupBy('account_id')
+
+    const currentHoldings = knex('transactions as t')
+      .join('investment_details as id', 't.id', 'id.transaction_id')
+      .select(
+        't.account_id',
+        'id.asset_id',
+        knex.raw(
+          "SUM(CASE WHEN t.flow = 'outflow' THEN id.quantity ELSE -id.quantity END) as current_quantity"
+        )
+      )
+      .groupBy('t.account_id', 'id.asset_id')
+      .having('current_quantity', '>', 0)
+
+    const heldAssetCount = knex(currentHoldings.as('current_holdings'))
+      .select('account_id', knex.raw('COUNT(asset_id) as distinct_assets_held'))
+      .groupBy('account_id')
+
+    // FINAL QUERY: Join the base accounts table with our calculated metrics from the CTEs.
+    const finalResult = await knex('accounts as acc')
+      .with('investment_buys', investmentBuys)
+      .with('held_asset_count', heldAssetCount)
+      .leftJoin('investment_buys as buys', 'acc.id', 'buys.account_id')
+      .leftJoin('held_asset_count as held', 'acc.id', 'held.account_id')
+      .select(
+        // --- THIS IS THE ONLY CHANGE ---
+        'acc.id as id', // Add the account ID and alias it as 'id' for the DataGrid
+        // --- END CHANGE ---
+        'acc.name as account',
+        'acc.balance as current_balance',
+        knex.raw('COALESCE(buys.total_invested_amount, 0) as amount_invested'),
+        knex.raw('COALESCE(held.distinct_assets_held, 0) as assets_held'),
+        knex.raw('COALESCE(buys.total_investment_count, 0) as investments_made')
+      )
+      .whereRaw('LOWER(acc.type) = ?', ['investment'])
+
+    return finalResult
+  } catch (error) {
+    console.error('Error getting basic investment overview:', error)
+    return { error: error.message }
+  }
+}
+
+ipcMain.handle('get-investment-overview', async () => {
+  // ADD THIS LINE
+  console.log('--- IPC a handler "get-investment-overview" was triggered! ---')
+  return await getBasicInvestmentOverview()
+})
+
+/**
  * Creates and configures the main application window.
  */
 function createMainWindow() {
@@ -444,6 +505,124 @@ ipcMain.handle('get-accounts-by-type', async (event, type) => {
     // Return an error object or null to the renderer
     return { error: error.message || 'An unknown error occurred' }
   }
+})
+
+/**
+ * A reliable function to seed the database with sample investment data.
+ * This should be placed in your main.js file.
+ */
+async function seedInvestmentData() {
+  // An array of investment events to create. Much cleaner than a long SQL script.
+  const investmentEvents = [
+    // { symbol, type, quantity, price, fees, date }
+    {
+      symbol: 'AAPL',
+      type: 'Buy',
+      quantity: 10,
+      price: 195.0,
+      fees: 5.0,
+      date: '2025-06-09 10:15:00'
+    },
+    {
+      symbol: 'BTC',
+      type: 'Buy',
+      quantity: 0.05,
+      price: 70000.0,
+      fees: 2.5,
+      date: '2025-06-11 22:45:00'
+    },
+    {
+      symbol: 'TSLA',
+      type: 'Buy',
+      quantity: 5,
+      price: 180.0,
+      fees: 5.0,
+      date: '2025-06-13 11:00:00'
+    },
+    {
+      symbol: 'AAPL',
+      type: 'Sell',
+      quantity: 2,
+      price: 210.0,
+      fees: 1.0,
+      date: '2025-06-16 14:30:00'
+    },
+    {
+      symbol: 'GOOGL',
+      type: 'Buy',
+      quantity: 3,
+      price: 175.0,
+      fees: 1.0,
+      date: '2025-06-18 09:45:00'
+    },
+    {
+      symbol: 'BTC',
+      type: 'Sell',
+      quantity: 0.01,
+      price: 72000.0,
+      fees: 0.5,
+      date: '2025-06-20 13:05:00'
+    }
+  ]
+
+  try {
+    // Use a Knex transaction to ensure all inserts succeed or fail together.
+    await knex.transaction(async (trx) => {
+      console.log('Starting investment seeding...')
+
+      for (const event of investmentEvents) {
+        // First, get the asset_id and account_id needed for the transaction
+        const asset = await trx('assets').where('symbol', event.symbol).first()
+        // We'll assume all transactions happen in an account with id=3 for this example
+        const accountId = 3
+
+        if (!asset) {
+          console.warn(`Asset with symbol ${event.symbol} not found. Skipping.`)
+          continue // Skip to the next event in the loop
+        }
+
+        const isBuy = event.type === 'Buy'
+        const flow = isBuy ? 'outflow' : 'inflow'
+        const transactionType = isBuy ? 'Investment' : 'Return'
+        const totalValue = event.quantity * event.price + (isBuy ? event.fees : -event.fees)
+
+        // --- THIS IS THE KEY PART ---
+
+        // Step 1: Insert the transaction WITHOUT specifying an ID.
+        // The .insert() method returns an array with the new ID.
+        const [transactionId] = await trx('transactions').insert({
+          account_id: accountId,
+          title: `${event.type} ${event.quantity} shares of ${event.symbol}`,
+          amount: totalValue,
+          flow: flow,
+          date_time: event.date,
+          type: transactionType
+        })
+
+        // Step 2: Use the `transactionId` we just got from the database.
+        await trx('investment_details').insert({
+          transaction_id: transactionId, // Use the dynamically generated ID
+          asset_id: asset.id,
+          quantity: event.quantity,
+          price_per_unit: event.price,
+          fees: event.fees
+        })
+
+        console.log(
+          `Successfully inserted transaction for ${event.symbol} with new ID: ${transactionId}`
+        )
+      }
+    })
+    console.log('Investment seeding completed successfully!')
+    return { success: true }
+  } catch (error) {
+    console.error('Investment seeding failed:', error)
+    return { error: error.message }
+  }
+}
+
+ipcMain.handle('seed-investments', async () => {
+  return await seedInvestmentData()
 })
 
 /**
