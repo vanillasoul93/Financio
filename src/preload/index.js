@@ -51,6 +51,8 @@ if (process.contextIsolated) {
         }
         return result
       },
+      addAccount: (formData) => ipcRenderer.invoke('add-account', formData),
+      deleteAccounts: (accountIds) => ipcRenderer.invoke('delete-accounts', accountIds),
       seedInvestments: () => ipcRenderer.invoke('seed-investments'),
       getInvestmentOverview: async () => {
         try {

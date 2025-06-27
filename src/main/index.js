@@ -121,6 +121,63 @@ ipcMain.handle('get-investment-overview', async () => {
 })
 
 /**
+ * Adds a new account to the database.
+ * @param {object} accountData - The data for the new account from the form.
+ * @returns {Promise<{success: boolean, id: number}|{error: string}>}
+ */
+async function addAccount(accountData) {
+  try {
+    // Knex's insert method returns an array with the ID of the new row.
+
+    const [newAccountId] = await knex('accounts').insert(accountData)
+
+    console.log(`Successfully added new account with ID: ${newAccountId}`)
+    return { success: true, id: newAccountId }
+  } catch (error) {
+    console.error('Error adding new account:', error)
+    // Return a structured error object
+    return { error: error.message }
+  }
+}
+
+ipcMain.handle('add-account', async (event, formData) => {
+  // The second argument `formData` is passed from the renderer process.
+  console.log('add-account IPC Called')
+  return await addAccount(formData)
+})
+
+/**
+ * Deletes one or more accounts and their associated transactions from the database.
+ * @param {number[]} accountIds - An array of account IDs to delete.
+ * @returns {Promise<{success: boolean}|{error: string}>}
+ */
+async function deleteAccounts(accountIds) {
+  if (!accountIds || accountIds.length === 0) {
+    return { error: 'No account IDs provided for deletion.' }
+  }
+  try {
+    // Use a transaction to ensure both operations succeed or fail together.
+    await knex.transaction(async (trx) => {
+      // First, delete any transactions linked to these accounts to prevent foreign key errors.
+      await trx('transactions').whereIn('account_id', accountIds).del()
+
+      // Then, delete the accounts themselves.
+      await trx('accounts').whereIn('id', accountIds).del()
+    })
+
+    console.log(`Successfully deleted accounts with IDs: ${accountIds.join(', ')}`)
+    return { success: true }
+  } catch (error) {
+    console.error(`Error deleting accounts:`, error)
+    return { error: error.message }
+  }
+}
+
+ipcMain.handle('delete-accounts', async (event, accountIds) => {
+  return await deleteAccounts(accountIds)
+})
+
+/**
  * Creates and configures the main application window.
  */
 function createMainWindow() {

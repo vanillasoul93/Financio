@@ -4,8 +4,8 @@ import { LinearProgress, Box, Typography } from '@mui/material'
 function UsageProgressBar({ value }) {
   const displayValue = Math.max(0, Math.min(100, value)) // Ensure value is between 0 and 100
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Box sx={{ width: '100%', mr: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', width: 135 }}>
+      <Box sx={{ mr: 1, width: 100 }}>
         <LinearProgress variant="determinate" value={displayValue} />
       </Box>
       <Box sx={{ minWidth: 35 }}>

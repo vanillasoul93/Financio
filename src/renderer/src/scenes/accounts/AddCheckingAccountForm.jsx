@@ -1,25 +1,35 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Modal, Box, TextField, Button, Typography, useTheme } from '@mui/material'
-import { tokens } from '../../theme' // Assuming your theme tokens are here
+import { tokens } from '../../theme' // Adjusted path to theme file
 
-function AddCreditCardForm({ open, onClose, onSubmit }) {
+/**
+ * A self-contained modal form for adding a new Checking or Savings account.
+ * @param {object} props
+ * @param {boolean} props.open - Controls if the modal is visible.
+ * @param {function} props.onClose - Function to call when the modal should close.
+ * @param {function} props.onSubmit - Function to call with the form data on successful submission.
+ * @param {string} props.accountType - The type of account being added (e.g., 'checking', 'savings').
+ */
+function AddCheckingAccountForm({ open, onClose, onSubmit }) {
   const theme = useTheme()
   const colors = tokens(theme.palette.mode)
 
-  // 1. State is updated for Credit Card fields
-  const initialState = {
+  const getInitialState = () => ({
     name: '',
     balance: '',
-    credit_limit: '',
-    due_date: '',
     associated_website: '',
-    type: 'Credit Card' // Hardcoded type
-  }
+    institution: '',
+    type: 'Checking' // Set the type based on the prop
+  })
 
-  const [formData, setFormData] = useState(initialState)
+  const [formData, setFormData] = useState(getInitialState())
   const [errors, setErrors] = useState({})
 
-  // 2. The handleChange function is generic and requires no changes
+  // Effect to reset the form state if the accountType prop changes while the modal is open
+  useEffect(() => {
+    setFormData(getInitialState())
+  }, [])
+
   const handleChange = (event) => {
     const { name, value } = event.target
     setFormData((prevState) => ({
@@ -32,29 +42,20 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
     }
   }
 
-  // 3. Validation logic is updated for Credit Card fields
   const validateForm = () => {
     let isValid = true
     const newErrors = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Card Name is required'
+      newErrors.name = 'Account Name is required'
+      isValid = false
+    }
+    if (!formData.institution.trim()) {
+      newErrors.institution = 'Financial Institution is Required'
       isValid = false
     }
     if (formData.balance === '' || isNaN(Number(formData.balance))) {
       newErrors.balance = 'Current Balance must be a valid number'
-      isValid = false
-    }
-    if (
-      formData.credit_limit === '' ||
-      isNaN(Number(formData.credit_limit)) ||
-      Number(formData.credit_limit) < 0
-    ) {
-      newErrors.credit_limit = 'Credit Limit must be a positive number'
-      isValid = false
-    }
-    if (!formData.due_date.trim()) {
-      newErrors.due_date = 'Next Payment Due Date is required'
       isValid = false
     }
 
@@ -62,16 +63,13 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
     return isValid
   }
 
-  // 4. handleSubmit is adapted for credit card data
   const handleSubmit = (event) => {
     event.preventDefault()
     if (validateForm()) {
       // Transform the data before submitting
       const submissionData = {
         ...formData,
-        // Ensure balance is stored as a negative number, as it's a liability
-        balance: -Math.abs(Number(formData.balance)),
-        credit_limit: Number(formData.credit_limit),
+        balance: Number(formData.balance),
         type: formData.type.toLowerCase()
       }
       onSubmit(submissionData)
@@ -79,10 +77,9 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
     }
   }
 
-  // 5. handleCancel resets the new form fields
   const handleCancel = () => {
     onClose()
-    setFormData(initialState)
+    setFormData(getInitialState())
     setErrors({})
   }
 
@@ -101,16 +98,17 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
         }}
       >
         <Typography variant="h3" component="h2" color={colors.greenAccent[400]} mb={2}>
-          Enter Credit Card Details
+          {/* Title is now dynamic based on the prop */}
+          Enter New Checking Account Details
         </Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate autoComplete="off">
-          {/* --- TEXTFIELDS UPDATED FOR CREDIT CARD --- */}
+          {/* --- TEXTFIELDS FOR CHECKING/SAVINGS ACCOUNT --- */}
           <TextField
             required
             fullWidth
             margin="normal"
             name="name"
-            label="Card Name (e.g., Chase Sapphire)"
+            label="Account Name"
             value={formData.name}
             onChange={handleChange}
             error={!!errors.name}
@@ -120,38 +118,24 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
             required
             fullWidth
             margin="normal"
+            name="institution"
+            label="Institution"
+            value={formData.institution}
+            onChange={handleChange}
+            error={!!errors.institution}
+            helperText={errors.institution}
+          />
+          <TextField
+            required
+            fullWidth
+            margin="normal"
             name="balance"
-            label="Current Balance (enter as positive number)"
+            label="Current Balance"
             type="number"
             value={formData.balance}
             onChange={handleChange}
             error={!!errors.balance}
             helperText={errors.balance}
-          />
-          <TextField
-            required
-            fullWidth
-            margin="normal"
-            name="credit_limit"
-            label="Credit Limit"
-            type="number"
-            value={formData.credit_limit}
-            onChange={handleChange}
-            error={!!errors.credit_limit}
-            helperText={errors.credit_limit}
-          />
-          <TextField
-            required
-            fullWidth
-            margin="normal"
-            name="due_date"
-            label="Next Payment Due Date"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={formData.due_date}
-            onChange={handleChange}
-            error={!!errors.due_date}
-            helperText={errors.due_date}
           />
           <TextField
             fullWidth
@@ -192,4 +176,4 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
   )
 }
 
-export default AddCreditCardForm
+export default AddCheckingAccountForm
