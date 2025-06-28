@@ -13,7 +13,7 @@ import {
   Fade,
   Slide
 } from '@mui/material'
-import { tokens } from '../../theme'
+
 import { DataGrid } from '@mui/x-data-grid'
 import { useState, useEffect } from 'react'
 import AddBillModal from './AddBillModal'
@@ -21,7 +21,7 @@ import EditBillModal from './EditBillModal'
 
 export default function BillView() {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   const [bills, setBills] = useState([])
   const [selection, setSelection] = useState([])

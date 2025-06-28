@@ -12,7 +12,6 @@ import AgricultureIcon from '@mui/icons-material/AgricultureOutlined'
 import Header from '../../components/Header'
 import CompactGoalCard from '../../components/GoalCompact'
 import CustomCircleProgress from '../../components/CustomCircleProgress' // Assuming this is used for credit usage
-import { tokens } from '../../theme'
 
 // =====================================================================
 // 1. Reusable Custom Hooks
@@ -115,7 +114,7 @@ const DashboardStatCard = forwardRef(
 
 export default function DashboardView() {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // State
   const [bills, setBills] = useState([])

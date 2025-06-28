@@ -1,14 +1,13 @@
 // components/CompactGoalCard.jsx
 import React from 'react'
 import { Box, Typography, LinearProgress, useTheme } from '@mui/material'
-import { tokens } from '../theme' // Adjust path if necessary
 
 // --- IMPORT YOUR MUI ICON MAP ---
 import muiIconMap from '../muiIconMap' // Adjust path to where muiIconMap.js is located
 
 const CompactGoalCard = ({ goal }) => {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // Destructure the new field names from the goal object
   const { name, description, goal_value, current_value, icon, monthly_investment } = goal

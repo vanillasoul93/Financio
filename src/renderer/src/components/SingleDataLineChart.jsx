@@ -1,12 +1,12 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
 import { Box, useTheme, Typography } from '@mui/material'
-import { tokens } from '../theme'
+
 import { LineChart } from '@mui/x-charts/LineChart'
 
 export default function SingleDataLineChart({ aData, xLabels, label }) {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   useEffect(() => {
     aData.map((data) => {

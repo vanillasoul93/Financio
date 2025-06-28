@@ -19,7 +19,6 @@ import {
 } from '@mui/material'
 import LinearProgress from '@mui/material/LinearProgress' // No need for linearProgressClasses import if not used
 import EditIcon from '@mui/icons-material/Edit' // Use specific icon if Insights is not dynamic
-import { tokens } from '../../theme'
 
 import IconPicker from '../../components/IconPicker'
 import muiIconMap from '../../muiIconMap' // Assuming allMuiIconNames is part of this or separate
@@ -438,7 +437,7 @@ const DeleteConfirmationDialog = ({ open, onClose, onConfirmDelete, name, colors
 
 export default function GoalCard({ card, onUpdate, onDelete }) {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // --- State Management ---
   const [percentage, setPercentage] = useState(null)

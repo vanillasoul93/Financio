@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
 import { Modal, Box, TextField, Button, Typography, useTheme } from '@mui/material'
-import { tokens } from '../../theme' // Assuming your theme tokens are here
 
 function AddCreditCardForm({ open, onClose, onSubmit }) {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // 1. State is updated for Credit Card fields
   const initialState = {

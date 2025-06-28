@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Header from '../../components/Header'
 // import dayjs from 'dayjs';
 import { Box, Grid, useTheme, Typography, Fade } from '@mui/material'
-import { tokens } from '../../theme'
+
 import BillPaymentCard from '../../components/BillPaymentCard'
 import CreditPaymentCard from '../../components/CreditPaymentCard'
 import paymentReceipt from '../../images/bill_payment_image.png'
@@ -12,7 +12,7 @@ export default function PayBillView() {
   const [cards, setCards] = useState([])
   // const [subscriptions, setSubscriptions] = useState([]);
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   const [activeBillIdForScreenshot, setActiveBillIdForScreenshot] = useState(null)
 

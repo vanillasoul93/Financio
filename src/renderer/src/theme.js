@@ -1,224 +1,620 @@
-import {createContext, useState, useMemo} from 'react';
-import {createTheme} from '@mui/material/styles';
+import { createContext, useState, useMemo } from 'react'
+import { createTheme } from '@mui/material/styles'
 
-// color design tokens
-export const tokens = (mode) => ({
-    
-    ...(mode === 'dark'
+// =================================================================================
+//  COLOR TOKEN DEFINITIONS
+// =================================================================================
+
+// Theme 1: Original Default Theme
+export const defaultTokens = (mode) => ({
+  ...(mode === 'dark'
     ? {
         grey: {
-            100: "#e0e0e0",
-            200: "#c2c2c2",
-            300: "#a3a3a3",
-            400: "#858585",
-            500: "#666666",
-            600: "#525252",
-            700: "#3d3d3d",
-            800: "#292929",
-            900: "#141414"
+          100: '#e0e0e0',
+          200: '#c2c2c2',
+          300: '#a3a3a3',
+          400: '#858585',
+          500: '#666666',
+          600: '#525252',
+          700: '#3d3d3d',
+          800: '#292929',
+          900: '#141414'
         },
         primary: {
-            100: "#d0d1d5",
-            200: "#a1a4ab",
-            300: "#727681",
-            400: "#1f2a40",
-            500: "#141b2d",
-            600: "#101624",
-            700: "#0c101b",
-            800: "#080b12",
-            900: "#040509"
+          100: '#d0d1d5',
+          200: '#a1a4ab',
+          300: '#727681',
+          400: '#1f2a40',
+          500: '#141b2d',
+          600: '#101624',
+          700: '#0c101b',
+          800: '#080b12',
+          900: '#040509'
         },
         greenAccent: {
-            100: "#dbf5ee",
-            200: "#b7ebde",
-            300: "#94e2cd",
-            400: "#70d8bd",
-            500: "#4cceac",
-            600: "#3da58a",
-            700: "#2e7c67",
-            800: "#1e5245",
-            900: "#0f2922"
+          100: '#dbf5ee',
+          200: '#b7ebde',
+          300: '#94e2cd',
+          400: '#70d8bd',
+          500: '#4cceac',
+          600: '#3da58a',
+          700: '#2e7c67',
+          800: '#1e5245',
+          900: '#0f2922'
         },
         redAccent: {
-            100: "#f8dcdb",
-            200: "#f1b9b7",
-            300: "#e99592",
-            400: "#e2726e",
-            500: "#db4f4a",
-            600: "#af3f3b",
-            700: "#832f2c",
-            800: "#58201e",
-            900: "#2c100f"
+          100: '#f8dcdb',
+          200: '#f1b9b7',
+          300: '#e99592',
+          400: '#e2726e',
+          500: '#db4f4a',
+          600: '#af3f3b',
+          700: '#832f2c',
+          800: '#58201e',
+          900: '#2c100f'
         },
         blueAccent: {
-            100: "#e1e2fe",
-            200: "#c3c6fd",
-            300: "#a4a9fc",
-            400: "#868dfb",
-            500: "#6870fa",
-            600: "#535ac8",
-            700: "#3e4396",
-            800: "#2a2d64",
-            900: "#151632"
-        },
-    }
+          100: '#e1e2fe',
+          200: '#c3c6fd',
+          300: '#a4a9fc',
+          400: '#868dfb',
+          500: '#6870fa',
+          600: '#535ac8',
+          700: '#3e4396',
+          800: '#2a2d64',
+          900: '#151632'
+        }
+      }
     : {
         grey: {
-            100: "#141414",
-            200: "#292929",
-            300: "#3d3d3d",
-            400: "#525252",
-            500: "#666666",
-            600: "#858585",
-            700: "#a3a3a3",
-            800: "#c2c2c2",
-            900: "#e0e0e0",
+          100: '#141414',
+          200: '#292929',
+          300: '#3d3d3d',
+          400: '#525252',
+          500: '#666666',
+          600: '#858585',
+          700: '#a3a3a3',
+          800: '#c2c2c2',
+          900: '#e0e0e0'
         },
         primary: {
-            100: "#040509",
-            200: "#080b12",
-            300: "#0c101b",
-            400: "#f2f0f0",
-            500: "#141b2d",
-            600: "#434957",
-            700: "#727681",
-            800: "#a1a4ab",
-            900: "#d0d1d5",
+          100: '#040509',
+          200: '#080b12',
+          300: '#0c101b',
+          400: '#f2f0f0',
+          500: '#141b2d',
+          600: '#434957',
+          700: '#727681',
+          800: '#a1a4ab',
+          900: '#d0d1d5'
         },
         greenAccent: {
-            100: "#0f2922",
-            200: "#1e5245",
-            300: "#2e7c67",
-            400: "#3da58a",
-            500: "#4cceac",
-            600: "#70d8bd",
-            700: "#94e2cd",
-            800: "#b7ebde",
-            900: "#dbf5ee",
+          100: '#0f2922',
+          200: '#1e5245',
+          300: '#2e7c67',
+          400: '#3da58a',
+          500: '#4cceac',
+          600: '#70d8bd',
+          700: '#94e2cd',
+          800: '#b7ebde',
+          900: '#dbf5ee'
         },
         redAccent: {
-            100: "#2c100f",
-            200: "#58201e",
-            300: "#832f2c",
-            400: "#af3f3b",
-            500: "#db4f4a",
-            600: "#e2726e",
-            700: "#e99592",
-            800: "#f1b9b7",
-            900: "#f8dcdb",
+          100: '#2c100f',
+          200: '#58201e',
+          300: '#832f2c',
+          400: '#af3f3b',
+          500: '#db4f4a',
+          600: '#e2726e',
+          700: '#e99592',
+          800: '#f1b9b7',
+          900: '#f8dcdb'
         },
         blueAccent: {
-            100: "#151632",
-            200: "#2a2d64",
-            300: "#3e4396",
-            400: "#535ac8",
-            500: "#6870fa",
-            600: "#868dfb",
-            700: "#a4a9fc",
-            800: "#c3c6fd",
-            900: "#e1e2fe",
-        },
-    }),
-});
-
-//mui theme settings
-export const themeSettings = (mode) => {
-    const colors = tokens(mode);
-
-    return{
-        palette :{
-            mode: mode, 
-            ...(mode ==="dark"
-                ? {
-                    primary:{
-                        main: colors.primary[500],
-                    },
-                    secondary: {
-                        main: colors.greenAccent[500],
-                    },
-                    neutral: {
-                        dark: colors.grey[700],
-                        main: colors.grey[500],
-                        light: colors.grey[100],
-                    },
-                    background: {
-                        default: colors.primary[500],
-                    }
-                } : {
-                    primary:{
-                        main: colors.primary[100],
-                    },
-                    secondary: {
-                        main: colors.greenAccent[500],
-                    },
-                    neutral: {
-                        dark: colors.grey[700],
-                        main: colors.grey[500],
-                        light: colors.grey[100],
-                    },
-                    background: {
-                        default: "#fcfcfc",
-                    },
-                }),
-        },
-        typography: {
-            fontFamily: ["Space Grotesk", "sans-seriff"].join(","),
-            fontSize: 12,
-            h1:{
-                fontFamily: ["Space Grotesk", "sans-seriff"].join(","),
-                fontSize: 40
-            },
-            h2:{
-                fontFamily: ["Space Grotesk", "sans-seriff"].join(","),
-                fontSize: 32
-            },
-            h3:{
-                fontFamily: ["Space Grotesk", "sans-seriff"].join(","),
-                fontSize: 24
-            },
-            h4:{
-                fontFamily: ["Space Grotesk", "sans-seriff"].join(","),
-                fontSize: 20
-            },
-            h5:{
-                fontFamily: ["Space Grotesk", "sans-seriff"].join(","),
-                fontSize: 16
-            },
-            h6:{
-                fontFamily: ["Space Grotesk", "sans-seriff"].join(","),
-                fontSize: 14
-            },
-
-        },
-        components: {
-            MuiDataGrid: {
-                styleOverrides: {
-                    root: {
-                        '--DataGrid-containerBackground': 'rgb(69,153,236)'
-                    }
-                }
-            }
+          100: '#151632',
+          200: '#2a2d64',
+          300: '#3e4396',
+          400: '#535ac8',
+          500: '#6870fa',
+          600: '#868dfb',
+          700: '#a4a9fc',
+          800: '#c3c6fd',
+          900: '#e1e2fe'
         }
-    };
-};
+      })
+})
 
-// context for color mode
+// Theme 2: Simple Black & White Theme
+export const simpleTokens = (mode) => ({
+  ...(mode === 'dark'
+    ? {
+        grey: {
+          100: '#e0e0e0',
+          200: '#c2c2c2',
+          300: '#a3a3a3',
+          400: '#858585',
+          500: '#666666',
+          600: '#525252',
+          700: '#3d3d3d',
+          800: '#292929',
+          900: '#141414'
+        },
+        primary: {
+          100: '#dcdcdc',
+          200: '#bababa',
+          300: '#989898',
+          400: '#767676',
+          500: '#212121',
+          600: '#1a1a1a',
+          700: '#141414',
+          800: '#0d0d0d',
+          900: '#070707'
+        },
+        greenAccent: {
+          100: '#e0e0e0',
+          200: '#c2c2c2',
+          300: '#a3a3a3',
+          400: '#858585',
+          500: '#666666',
+          600: '#525252',
+          700: '#3d3d3d',
+          800: '#292929',
+          900: '#141414'
+        },
+        redAccent: {
+          100: '#e0e0e0',
+          200: '#c2c2c2',
+          300: '#a3a3a3',
+          400: '#858585',
+          500: '#666666',
+          600: '#525252',
+          700: '#3d3d3d',
+          800: '#292929',
+          900: '#141414'
+        },
+        blueAccent: {
+          100: '#e0e0e0',
+          200: '#c2c2c2',
+          300: '#a3a3a3',
+          400: '#858585',
+          500: '#666666',
+          600: '#525252',
+          700: '#3d3d3d',
+          800: '#292929',
+          900: '#141414'
+        }
+      }
+    : {
+        grey: {
+          100: '#141414',
+          200: '#292929',
+          300: '#3d3d3d',
+          400: '#525252',
+          500: '#666666',
+          600: '#858585',
+          700: '#a3a3a3',
+          800: '#c2c2c2',
+          900: '#e0e0e0'
+        },
+        primary: {
+          100: '#212121',
+          200: '#bababa',
+          300: '#989898',
+          400: '#767676',
+          500: '#f5f5f5',
+          600: '#dcdcdc',
+          700: '#c2c2c2',
+          800: '#a3a3a3',
+          900: '#858585'
+        },
+        greenAccent: {
+          100: '#141414',
+          200: '#292929',
+          300: '#3d3d3d',
+          400: '#525252',
+          500: '#666666',
+          600: '#858585',
+          700: '#a3a3a3',
+          800: '#c2c2c2',
+          900: '#e0e0e0'
+        },
+        redAccent: {
+          100: '#141414',
+          200: '#292929',
+          300: '#3d3d3d',
+          400: '#525252',
+          500: '#666666',
+          600: '#858585',
+          700: '#a3a3a3',
+          800: '#c2c2c2',
+          900: '#e0e0e0'
+        },
+        blueAccent: {
+          100: '#141414',
+          200: '#292929',
+          300: '#3d3d3d',
+          400: '#525252',
+          500: '#666666',
+          600: '#858585',
+          700: '#a3a3a3',
+          800: '#c2c2c2',
+          900: '#e0e0e0'
+        }
+      })
+})
+
+// Theme 3: Twitch Purple Theme
+export const twitchTokens = (mode) => ({
+  ...(mode === 'dark'
+    ? {
+        grey: {
+          100: '#f0f0f0',
+          200: '#e0e0e0',
+          300: '#d1d1d1',
+          400: '#c2c2c2',
+          500: '#b3b3b3',
+          600: '#8f8f8f',
+          700: '#6b6b6b',
+          800: '#484848',
+          900: '#242424'
+        },
+        primary: {
+          100: '#dcdce3',
+          200: '#b9b9c7',
+          300: '#9696ab',
+          400: '#73738f',
+          500: '#18181B',
+          600: '#131316',
+          700: '#0e0e10',
+          800: '#0a0a0b',
+          900: '#050505'
+        },
+        purpleAccent: {
+          100: '#e9dffe',
+          200: '#d3befe',
+          300: '#bd9efe',
+          400: '#a77dfd',
+          500: '#9146FF',
+          600: '#7438cc',
+          700: '#572a99',
+          800: '#3a1c66',
+          900: '#1d0e33'
+        },
+        greenAccent: {
+          100: '#e3fcec',
+          200: '#c8f9d9',
+          300: '#adf6c6',
+          400: '#92f3b3',
+          500: '#77F0A0',
+          600: '#5fc080',
+          700: '#479060',
+          800: '#306040',
+          900: '#183020'
+        },
+        redAccent: {
+          100: '#fde9e9',
+          200: '#fbd3d2',
+          300: '#f9bdbc',
+          400: '#f7a7a5',
+          500: '#F59190',
+          600: '#c47473',
+          700: '#935756',
+          800: '#623a3a',
+          900: '#311d1d'
+        },
+        blueAccent: {
+          100: '#e6e0ff',
+          200: '#ccc2ff',
+          300: '#b3a3ff',
+          400: '#9985ff',
+          500: '#8066FF',
+          600: '#6652cc',
+          700: '#4d3d99',
+          800: '#332966',
+          900: '#191433'
+        }
+      }
+    : {
+        grey: {
+          100: '#141414',
+          200: '#292929',
+          300: '#3d3d3d',
+          400: '#525252',
+          500: '#666666',
+          600: '#858585',
+          700: '#a3a3a3',
+          800: '#c2c2c2',
+          900: '#e0e0e0'
+        },
+        primary: {
+          100: '#242424',
+          200: '#e0e0e0',
+          300: '#d1d1d1',
+          400: '#c2c2c2',
+          500: '#F7F7F8',
+          600: '#c6c6c6',
+          700: '#949494',
+          800: '#636363',
+          900: '#313131'
+        },
+        purpleAccent: {
+          100: '#1d0e33',
+          200: '#3a1c66',
+          300: '#572a99',
+          400: '#7438cc',
+          500: '#9146FF',
+          600: '#a77dfd',
+          700: '#bd9efe',
+          800: '#d3befe',
+          900: '#e9dffe'
+        },
+        greenAccent: {
+          100: '#183020',
+          200: '#306040',
+          300: '#479060',
+          400: '#5fc080',
+          500: '#77F0A0',
+          600: '#92f3b3',
+          700: '#adf6c6',
+          800: '#c8f9d9',
+          900: '#e3fcec'
+        },
+        redAccent: {
+          100: '#311d1d',
+          200: '#623a3a',
+          300: '#935756',
+          400: '#c47473',
+          500: '#F59190',
+          600: '#f7a7a5',
+          700: '#f9bdbc',
+          800: '#fbd3d2',
+          900: '#fde9e9'
+        },
+        blueAccent: {
+          100: '#191433',
+          200: '#332966',
+          300: '#4d3d99',
+          400: '#6652cc',
+          500: '#8066FF',
+          600: '#9985ff',
+          700: '#b3a3ff',
+          800: '#ccc2ff',
+          900: '#e6e0ff'
+        }
+      })
+})
+
+// Theme 4: Discord-Style Theme
+export const discordTokens = (mode) => ({
+  ...(mode === 'dark'
+    ? {
+        grey: {
+          100: '#e3e5e8',
+          200: '#c7c9cc',
+          300: '#abacb1',
+          400: '#8f9095',
+          500: '#72737a',
+          600: '#5c5c62',
+          700: '#454549',
+          800: '#2e2e31',
+          900: '#171718'
+        },
+        primary: {
+          100: '#c5c7d0',
+          200: '#9a9eb2',
+          300: '#707493',
+          400: '#454a75',
+          500: '#2f3136',
+          600: '#25272b',
+          700: '#1c1d20',
+          800: '#121316',
+          900: '#09090b'
+        },
+        blurpleAccent: {
+          100: '#d2d4fe',
+          200: '#a5a9fe',
+          300: '#787efd',
+          400: '#4b52fc',
+          500: '#5865F2',
+          600: '#4651c2',
+          700: '#353d91',
+          800: '#232861',
+          900: '#121430'
+        },
+        greenAccent: {
+          100: '#c7f0d4',
+          200: '#9ee1b0',
+          300: '#76d18b',
+          400: '#4ec267',
+          500: '#24B44B',
+          600: '#1d8f3c',
+          700: '#166b2d',
+          800: '#10481e',
+          900: '#08240f'
+        },
+        redAccent: {
+          100: '#fad5d6',
+          200: '#f6abae',
+          300: '#f18185',
+          400: '#ed575c',
+          500: '#ED4245',
+          600: '#be3537',
+          700: '#8e282a',
+          800: '#5f1a1c',
+          900: '#2f0d0e'
+        }
+      }
+    : {
+        grey: {
+          100: '#171718',
+          200: '#2e2e31',
+          300: '#454549',
+          400: '#5c5c62',
+          500: '#72737a',
+          600: '#8f9095',
+          700: '#abacb1',
+          800: '#c7c9cc',
+          900: '#e3e5e8'
+        },
+        primary: {
+          100: '#09090b',
+          200: '#121316',
+          300: '#1c1d20',
+          400: '#25272b',
+          500: '#f2f3f5',
+          600: '#c2c2c2',
+          700: '#919191',
+          800: '#616161',
+          900: '#303030'
+        },
+        blurpleAccent: {
+          100: '#121430',
+          200: '#232861',
+          300: '#353d91',
+          400: '#4651c2',
+          500: '#5865F2',
+          600: '#7984f5',
+          700: '#9ba2f7',
+          800: '#bdc1fa',
+          900: '#dedffc'
+        },
+        greenAccent: {
+          100: '#08240f',
+          200: '#10481e',
+          300: '#166b2d',
+          400: '#1d8f3c',
+          500: '#24B44B',
+          600: '#4ec267',
+          700: '#76d18b',
+          800: '#9ee1b0',
+          900: '#c7f0d4'
+        },
+        redAccent: {
+          100: '#2f0d0e',
+          200: '#5f1a1c',
+          300: '#8e282a',
+          400: '#be3537',
+          500: '#ED4245',
+          600: '#ed575c',
+          700: '#f18185',
+          800: '#f6abae',
+          900: '#fad5d6'
+        }
+      })
+})
+
+// =================================================================================
+//  MUI THEME SETTINGS
+// =================================================================================
+export const themeSettings = (themeName, mode) => {
+  let colors
+  let secondaryColor
+  let focusColor
+
+  switch (themeName) {
+    case 'simple':
+      colors = simpleTokens(mode)
+      secondaryColor = colors.grey[500]
+      focusColor = colors.grey[mode === 'dark' ? 100 : 700]
+      break
+    case 'twitch':
+      colors = twitchTokens(mode)
+      secondaryColor = colors.purpleAccent[500]
+      focusColor = colors.purpleAccent[500]
+      break
+    case 'discord':
+      colors = discordTokens(mode)
+      secondaryColor = colors.blurpleAccent[500]
+      focusColor = colors.blurpleAccent[500]
+      break
+    case 'default':
+    default:
+      colors = defaultTokens(mode)
+      secondaryColor = colors.greenAccent[500]
+      focusColor = colors.greenAccent[400]
+      break
+  }
+
+  const themeObj = {
+    palette: {
+      mode: mode,
+      ...(mode === 'dark'
+        ? {
+            primary: { main: colors.primary[500] },
+            secondary: { main: secondaryColor },
+            neutral: { dark: colors.grey[700], main: colors.grey[500], light: colors.grey[100] },
+            background: { default: colors.primary[700] || colors.primary[500] }
+          }
+        : {
+            primary: { main: colors.primary[100] },
+            secondary: { main: secondaryColor },
+            neutral: { dark: colors.grey[700], main: colors.grey[500], light: colors.grey[100] },
+            background: { default: '#fcfcfc' }
+          })
+    },
+    typography: {
+      fontFamily: ['Space Grotesk', 'sans-serif'].join(','),
+      fontSize: 12,
+      h1: { fontFamily: ['Space Grotesk', 'sans-serif'].join(','), fontSize: 40 },
+      h2: { fontFamily: ['Space Grotesk', 'sans-serif'].join(','), fontSize: 32 },
+      h3: { fontFamily: ['Space Grotesk', 'sans-serif'].join(','), fontSize: 24 },
+      h4: { fontFamily: ['Space Grotesk', 'sans-serif'].join(','), fontSize: 20 },
+      h5: { fontFamily: ['Space Grotesk', 'sans-serif'].join(','), fontSize: 16 },
+      h6: { fontFamily: ['Space Grotesk', 'sans-serif'].join(','), fontSize: 14 }
+    },
+    components: {
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            '& label.Mui-focused': { color: focusColor },
+            '& .MuiOutlinedInput-root': {
+              '&.Mui-focused fieldset': { borderColor: focusColor }
+            }
+          }
+        }
+      },
+      MuiDataGrid: {
+        styleOverrides: {
+          root: { '--DataGrid-containerBackground': 'rgb(69,153,236)' }
+        }
+      }
+    }
+  }
+
+  // --- KEY CHANGE: ATTACH THE COLORS OBJECT TO THE THEME ---
+  themeObj.colors = colors
+
+  return themeObj
+}
+
+// =================================================================================
+//  CONTEXT AND HOOK
+//  The useMode hook now also returns the current theme's name.
+// =================================================================================
 export const ColorModeContext = createContext({
-    toggleColorMode: () => {}
-});
+  toggleColorMode: () => {},
+  setTheme: () => {},
+  themeName: 'default' // Provide a default value for the theme name
+})
 
 export const useMode = () => {
-    const [mode, setMode]  = useState("dark");
+  const [themeState, setThemeState] = useState({ name: 'default', mode: 'dark' })
 
-    const colorMode = useMemo(
-        () => ({
-            toggleColorMode: () =>
-                setMode((prev) => (prev === "light" ? "dark" : "light"))
-        }),
-        []
-    );
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () =>
+        setThemeState((prev) => ({ ...prev, mode: prev.mode === 'light' ? 'dark' : 'light' })),
+      setTheme: (name) => setThemeState((prev) => ({ ...prev, name: name })),
+      // Expose the current theme name so components can know which one is active
+      themeName: themeState.name
+    }),
+    [themeState.name]
+  )
 
-    const theme = useMemo(() => createTheme(themeSettings(mode)), [mode])
+  const theme = useMemo(
+    () => createTheme(themeSettings(themeState.name, themeState.mode)),
+    [themeState]
+  )
 
-    return [theme, colorMode];
-} 
+  return [theme, colorMode]
+}

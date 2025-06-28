@@ -18,7 +18,6 @@ import {
 
 import IconPicker from '../../components/IconPicker' // Adjust the path as needed
 import muiIconMap from '../../muiIconMap' // Import muiIconMap to render the selected icon
-import { tokens } from '../../theme'
 
 function GoalFormModal({ open, onClose, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -151,7 +150,7 @@ function GoalFormModal({ open, onClose, onSubmit }) {
   }
 
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   const SelectedIconComponent = formData.icon ? muiIconMap[formData.icon] : null
 

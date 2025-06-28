@@ -14,13 +14,12 @@ import SearchIcon from '@mui/icons-material/Search'
 import CloseIcon from '@mui/icons-material/Close'
 import Header from '../../components/Header'
 
-import { tokens } from '../../theme'
 // Import your centralized icon map and names
 import muiIconMap, { allMuiIconNames } from '../../muiIconMap'
 
 export default function HistoryView() {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredIconNames, setFilteredIconNames] = useState(allMuiIconNames)
   const [selectedIconName, setSelectedIconName] = useState(null)

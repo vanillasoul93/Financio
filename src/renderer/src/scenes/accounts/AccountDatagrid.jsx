@@ -1,11 +1,10 @@
 import React from 'react'
 import { DataGrid } from '@mui/x-data-grid'
 import { Box, useTheme } from '@mui/material'
-import { tokens } from '../../theme'
 
 function AccountDatagrid({ rows, columns, selectionModel, onSelectionModelChange }) {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
   return (
     <Box
       height={'100%'}
@@ -56,7 +55,7 @@ function AccountDatagrid({ rows, columns, selectionModel, onSelectionModelChange
         // disableColumnMenu // Optional: Disables the column menu entirely
         // disableColumnSelector // Optional: Disables the column selector
         // disableColumnResize // Optional: Prevents manual resizing of columns
-
+        style={{ fontSize: '18px' }}
         // The DataGrid itself will manage its internal horizontal scroll if needed
         // due to column content length or many columns, but it won't push the parent.
         initialState={{

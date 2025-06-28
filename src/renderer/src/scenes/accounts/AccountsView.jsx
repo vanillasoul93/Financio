@@ -22,7 +22,6 @@ import AddCheckingForm from './AddCheckingAccountForm'
 import AddCreditCardForm from './AddCreditCardForm'
 import AddInvestmentAccountForm from './AddInvestmentAccountForm'
 import AddSavingsAccountForm from './AddSavingsAccountForm'
-import { tokens } from '../../theme'
 
 // =================================================================================
 //  CONSTANTS & COLUMN DEFINITIONS
@@ -98,8 +97,14 @@ const percentFormatter = (params) => {
 }
 
 const checkingColumns = [
-  { field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
-  { field: 'name', headerName: 'Account Name', flex: 1, maxWidth: 250 },
+  //{ field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
+  {
+    field: 'name',
+    headerName: 'Account Name',
+    flex: 1,
+    maxWidth: 250,
+    cellClassName: 'name-column--cell'
+  },
   {
     field: 'balance',
     headerName: 'Current Balance',
@@ -113,8 +118,8 @@ const checkingColumns = [
 
 // Use a factory function for columns that depend on theme (colors)
 const createCreditCardColumns = (colors) => [
-  { field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
-  { field: 'name', headerName: 'Card Name', flex: 1 },
+  //{ field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
+  { field: 'name', headerName: 'Card Name', flex: 1, cellClassName: 'name-column--cell' },
   {
     field: 'balance',
     headerName: 'Current Balance',
@@ -145,8 +150,8 @@ const createCreditCardColumns = (colors) => [
 ]
 
 const investmentColumns = [
-  { field: 'id', headerName: 'ID', flex: 0.5 },
-  { field: 'account', headerName: 'Account', flex: 1 },
+  //{ field: 'id', headerName: 'ID', flex: 0.5 },
+  { field: 'account', headerName: 'Account', flex: 1, cellClassName: 'name-column--cell' },
   {
     field: 'current_balance',
     headerName: 'Cash Balance',
@@ -166,8 +171,8 @@ const investmentColumns = [
 ]
 
 const savingsColumns = [
-  { field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
-  { field: 'name', headerName: 'Account Name', flex: 1 },
+  //{ field: 'id', headerName: 'ID', flex: 1, maxWidth: 70 },
+  { field: 'name', headerName: 'Account Name', flex: 1, cellClassName: 'name-column--cell' },
   {
     field: 'balance',
     headerName: 'Current Balance',
@@ -189,7 +194,7 @@ const savingsColumns = [
 // =================================================================================
 export default function AccountsView() {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // --- STATE MANAGEMENT ---
   const [selectedTab, setSelectedTab] = useState(0)

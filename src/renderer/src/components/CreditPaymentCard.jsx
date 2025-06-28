@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Box, Typography, useTheme, TextField, Button } from '@mui/material'
-import { tokens } from '../theme' // Assuming your theme's color tokens are defined here
+
 import { format, differenceInDays, isPast, isToday, isValid } from 'date-fns' // Re-import date-fns
 import paymentReceipt from '../images/bill_payment_image.png' // Re-import image
 
@@ -32,7 +32,7 @@ const CreditPaymentCard = ({
   onSave // Callback for saving
 }) => {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // Use state for editable fields, initialized with props
   const [currentBalance, setCurrentBalance] = useState(initialBalance)

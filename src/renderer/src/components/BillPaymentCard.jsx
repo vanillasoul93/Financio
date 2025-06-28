@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react' // Import useState
 import { Box, Typography, useTheme, TextField, Button, IconButton } from '@mui/material' // Import TextField, Button
-import { tokens } from '../theme' // Assuming your theme's color tokens are defined here
+
 import { format, differenceInDays, isPast, isToday, isValid } from 'date-fns'
 import paymentReceipt from '../images/bill_payment_image.png'
 import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOutlined'
@@ -35,7 +35,7 @@ const BillPaymentCard = ({
   setLoadingScreenshot // New prop: setter for loading state from parent
 }) => {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // Use state for editable amounts, initialized with props
   const [currentAmountDue, setCurrentAmountDue] = useState(

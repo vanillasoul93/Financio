@@ -14,7 +14,6 @@ import {
   MenuItem,
   FormHelperText
 } from '@mui/material'
-import { tokens } from '../../theme'
 
 function EditBillModal({ open, onClose, onSubmit, data }) {
   const [formData, setFormData] = useState({
@@ -138,7 +137,7 @@ function EditBillModal({ open, onClose, onSubmit, data }) {
   }
 
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   return (
     <Modal

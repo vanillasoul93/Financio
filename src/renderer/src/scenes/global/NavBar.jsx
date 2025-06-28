@@ -17,12 +17,14 @@ import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange'
 import AccountBoxOutlinedIcon from '@mui/icons-material/AccountBoxOutlined'
 import dashyboardico from '../../images/logo.png'
 
-import { tokens } from '../../theme'
 import 'react-pro-sidebar/dist/css/styles.css'
 import { useState, useEffect } from 'react'
 import { ProSidebar, Menu, MenuItem } from 'react-pro-sidebar'
 import { Box, IconButton, Typography, useTheme } from '@mui/material'
 import { Link, useLocation } from 'react-router-dom'
+import ThemeSwitcher from '../../components/ThemeSwitcher'
+import { useContext } from 'react'
+import { ColorModeContext } from '../../theme'
 
 export default function NavBar() {
   const [value, setValue] = React.useState(0)
@@ -31,7 +33,7 @@ export default function NavBar() {
   }
 
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
   const [isCollapsed, setIsCollapsed] = useState(false)
   const location = useLocation()
   const [selected, setSelected] = useState('Dashboard')
@@ -59,7 +61,7 @@ export default function NavBar() {
 
   const Item = ({ title, to, icon, selected, setSelected }) => {
     const theme = useTheme()
-    const colors = tokens(theme.palette.mode)
+    const colors = theme.colors
     return (
       <MenuItem active={selected === title} style={{ color: colors.grey[100] }} icon={icon}>
         <Typography variant="h4">{title}</Typography>
@@ -67,6 +69,8 @@ export default function NavBar() {
       </MenuItem>
     )
   }
+
+  const { toggleColorMode } = useContext(ColorModeContext)
 
   return (
     <Box
@@ -210,6 +214,16 @@ export default function NavBar() {
               selected={selected}
               setSelected={setSelected}
             />
+
+            <Box display="flex" justifyContent="space-between">
+              {/* ... other navbar content ... */}
+              <Box display="flex">
+                <IconButton onClick={toggleColorMode}>
+                  {/* ... dark/light mode icon ... */}
+                </IconButton>
+                <ThemeSwitcher /> {/* <-- Add the component here */}
+              </Box>
+            </Box>
           </Box>
         </Menu>
       </ProSidebar>

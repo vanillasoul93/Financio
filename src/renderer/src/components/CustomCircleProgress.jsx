@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { Typography, Box, useTheme } from '@mui/material'
-import { tokens } from '../theme'
+
 import { CircularProgressbar } from 'react-circular-progressbar'
 import 'react-circular-progressbar/dist/styles.css'
 
 const CustomCircleProgress = ({ value, text }) => {
   // Renamed 'percentage' to 'value' for consistency with CircularProgressbar
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   const getProgressColor = (progress) => {
     if (progress <= 20) {

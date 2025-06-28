@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { Modal, Box, TextField, Button, Typography, useTheme } from '@mui/material'
-import { tokens } from '../../theme' // Adjusted path to theme file
 
 /**
  * A self-contained modal form for adding a new Savings account.
@@ -11,7 +10,7 @@ import { tokens } from '../../theme' // Adjusted path to theme file
  */
 function AddSavingsAccountForm({ open, onClose, onSubmit }) {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   const getInitialState = () => ({
     name: '',

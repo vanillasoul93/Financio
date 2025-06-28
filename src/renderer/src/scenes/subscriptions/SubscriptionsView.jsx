@@ -14,7 +14,7 @@ import {
   Zoom,
   Slide
 } from '@mui/material'
-import { tokens } from '../../theme'
+
 import { DataGrid } from '@mui/x-data-grid'
 import { useState, useEffect } from 'react'
 import AddSubscriptionModal from './AddSubscriptionModal'
@@ -23,7 +23,7 @@ import EditSubscriptionModal from './EditSubscriptionModal'
 export default function SubscriptionsView() {
   //import theme
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
   //state hooks
   const [subscriptions, setSubscriptions] = useState([])
   const [selection, setSelection] = useState([])

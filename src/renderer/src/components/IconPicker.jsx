@@ -16,7 +16,6 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import CloseIcon from '@mui/icons-material/Close' // Keep CloseIcon for the title bar
 import muiIconMap, { allMuiIconNames } from '../muiIconMap' // Adjust the path as needed
-import { tokens } from '../theme'
 
 function IconPicker({
   open: isIconSelectorOpen,
@@ -25,7 +24,7 @@ function IconPicker({
   currentGoalIconName
 }) {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredIconNames = allMuiIconNames.filter((iconName) =>

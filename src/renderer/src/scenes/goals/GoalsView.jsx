@@ -12,7 +12,6 @@ import {
 import Header from '../../components/Header'
 import GoalCard from './GoalCard'
 import AddGoalModal from './AddGoalModal'
-import { tokens } from '../../theme'
 
 // --- Constants & Helper Functions (if any grow complex enough to warrant extraction) ---
 
@@ -74,7 +73,7 @@ const MonthlyInvestmentSummary = ({ totalMonthlyInvestments, colors }) => {
 
 export default function GoalsView() {
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   // --- State Management ---
   const [goals, setGoals] = useState([])

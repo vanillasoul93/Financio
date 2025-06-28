@@ -14,7 +14,6 @@ import {
   MenuItem,
   FormHelperText
 } from '@mui/material'
-import { tokens } from '../../theme'
 
 function AddCardFormModal({ open, onClose, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -124,7 +123,7 @@ function AddCardFormModal({ open, onClose, onSubmit }) {
   }
 
   const theme = useTheme()
-  const colors = tokens(theme.palette.mode)
+  const colors = theme.colors
 
   return (
     <Modal
