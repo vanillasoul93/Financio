@@ -22,23 +22,23 @@ function AccountDatagrid({ rows, columns, selectionModel, onSelectionModelChange
           color: colors.greenAccent[300]
         },
         '& .MuiDataGrid-columnHeader': {
-          backgroundColor: colors.blueAccent[700] + '!important'
+          backgroundColor: colors.primary[500] + '!important'
         },
         '& .MuiDataGrid-virtualScroller': {
-          backgroundColor: colors.primary[400]
+          backgroundColor: colors.primary[600]
         },
         '& .MuiDataGrid-footerContainer': {
           borderTop: 'none',
-          backgroundColor: colors.blueAccent[700]
+          backgroundColor: colors.primary[500]
         },
         '& .MuiDataGrid-cell:focus-within, & .MuiDataGrid-cell:focus': {
           outline: 'none !important'
         },
         '& .MuiDataGrid-scrollbarFiller, & .MuiDataGrid-scrollbarFiller--header': {
-          backgroundColor: colors.blueAccent[700] + '!important'
+          backgroundColor: colors.primary[700] + '!important'
         },
         '& .Mui-selected': {
-          backgroundColor: colors.blueAccent[800] + '!important'
+          backgroundColor: colors.primary[500] + '!important'
         }
       }}
     >

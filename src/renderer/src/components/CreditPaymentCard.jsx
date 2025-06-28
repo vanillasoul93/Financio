@@ -135,7 +135,7 @@ const CreditPaymentCard = ({
   return (
     <Box
       sx={{
-        backgroundColor: colors.primary[400],
+        backgroundColor: colors.primary[500],
         borderRadius: '8px',
         padding: '16px',
         display: 'flex',

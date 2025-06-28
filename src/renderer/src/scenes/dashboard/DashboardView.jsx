@@ -115,6 +115,7 @@ const DashboardStatCard = forwardRef(
 export default function DashboardView() {
   const theme = useTheme()
   const colors = theme.colors
+  const secondaryColor = theme.palette.secondary.main
 
   // State
   const [bills, setBills] = useState([])
@@ -181,23 +182,6 @@ export default function DashboardView() {
   const xLabels = useMemo(
     () => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     []
-  )
-
-  const bluePalette = useMemo(
-    () => [
-      colors.blueAccent[500],
-      colors.blueAccent[300],
-      colors.blueAccent[600],
-      colors.blueAccent[800],
-      colors.blueAccent[500],
-      colors.blueAccent[300],
-      colors.blueAccent[600],
-      colors.blueAccent[800],
-      colors.blueAccent[500],
-      colors.blueAccent[300],
-      colors.blueAccent[600]
-    ],
-    [colors]
   )
 
   //Custom Component for ToolTip
@@ -277,6 +261,11 @@ export default function DashboardView() {
     ],
     []
   )
+
+  const secondaryShadesObject = colors.blueAccent || {}
+
+  // 2. Use Object.values() to convert the object of shades into an array of colors.
+  const secondaryShadesArray = Object.values(secondaryShadesObject)
 
   // Handlers
   const handleDateChange = useCallback((newDate) => {
@@ -443,7 +432,7 @@ export default function DashboardView() {
             <DashboardStatCard
               title="Cash Flow ( Yearly )"
               delay="50ms"
-              backgroundColor={colors.primary[700]}
+              backgroundColor={colors.primary[600]}
             >
               <ResponsiveContainer width="100%" height={300}>
                 {' '}
@@ -500,7 +489,7 @@ export default function DashboardView() {
             <DashboardStatCard
               title={`Cash Flow ( ${formattedDate} )`} // More descriptive title
               delay="100ms"
-              backgroundColor={colors.primary[700]}
+              backgroundColor={colors.primary[600]}
             >
               <Box
                 display="flex"
@@ -571,7 +560,7 @@ export default function DashboardView() {
             <DashboardStatCard
               title="Credit Usage"
               delay="200ms"
-              backgroundColor={colors.primary[700]}
+              backgroundColor={colors.primary[600]}
               maxHeight="500px"
               linkTo="/creditcards"
               linkColor={colors.greenAccent[500]}
@@ -614,14 +603,14 @@ export default function DashboardView() {
             <DashboardStatCard
               title="Spendings & Expenses"
               delay="250ms"
-              backgroundColor={colors.primary[700]}
+              backgroundColor={colors.primary[600]}
             >
               <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ flexGrow: 1 }}>
                   {' '}
                   {/* Ensures PieChart takes available space */}
                   <PieChart
-                    colors={bluePalette}
+                    colors={secondaryShadesArray}
                     series={[
                       {
                         innerRadius: 90,
@@ -719,7 +708,7 @@ export default function DashboardView() {
               <DashboardStatCard
                 title="Savings"
                 delay="300ms"
-                backgroundColor={colors.primary[700]}
+                backgroundColor={colors.primary[600]}
               >
                 <Typography mb="4px" variant="h3">
                   $ 3,954.39
@@ -779,7 +768,7 @@ export default function DashboardView() {
               <DashboardStatCard
                 title="Checking"
                 delay="350ms"
-                backgroundColor={colors.primary[700]}
+                backgroundColor={colors.primary[600]}
               >
                 <Typography mb="4px" variant="h3">
                   $ 3,954.39
@@ -841,7 +830,7 @@ export default function DashboardView() {
           <Grid size={{ xs: 12, s: 12, md: 12, lg: 6 }}>
             <Zoom in={true} style={{ transitionDelay: '400ms' }}>
               <Box
-                backgroundColor={colors.primary[700]}
+                backgroundColor={colors.primary[600]}
                 height="100%"
                 borderRadius="8px"
                 display="flex"
@@ -906,12 +895,12 @@ export default function DashboardView() {
               <DashboardStatCard
                 title="Goals"
                 delay="350ms"
-                backgroundColor={colors.primary[700]}
+                backgroundColor={colors.primary[600]}
                 linkTo="/goals"
                 linkColor={colors.greenAccent[500]}
               >
                 <Box
-                  backgroundColor={colors.primary[700]}
+                  backgroundColor={colors.primary[600]}
                   height="100%"
                   borderRadius="8px"
                   display="flex"

@@ -334,10 +334,10 @@ export default function AccountsView() {
               '& .MuiTab-root.Mui-selected': { color: colors.grey[100] }
             }}
           >
-            <Tab label="Checking" />
-            <Tab label="Credit Cards" />
-            <Tab label="Investments" />
-            <Tab label="Savings" />
+            <Tab label={<Typography variant="h5">Checking</Typography>} />
+            <Tab label={<Typography variant="h5">Credit Cards</Typography>} />
+            <Tab label={<Typography variant="h5">Investments</Typography>} />
+            <Tab label={<Typography variant="h5">Savings</Typography>} />
           </Tabs>
         </Box>
 
@@ -403,11 +403,13 @@ export default function AccountsView() {
       <Dialog
         open={isConfirmOpen}
         onClose={handleConfirmClose}
-        PaperProps={{
-          sx: {
-            backgroundColor: colors.primary[400],
-            borderRadius: '15px',
-            color: colors.grey[100]
+        slotProps={{
+          paper: {
+            sx: {
+              backgroundColor: colors.primary[800],
+              borderRadius: '15px',
+              color: colors.grey[100]
+            }
           }
         }}
       >

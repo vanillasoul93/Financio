@@ -47,7 +47,7 @@ function IconPicker({
       fullWidth
       PaperProps={{
         sx: {
-          backgroundColor: colors.blueAccent[900],
+          backgroundColor: colors.primary[900],
           color: colors.grey[100],
           borderRadius: '8px'
         }

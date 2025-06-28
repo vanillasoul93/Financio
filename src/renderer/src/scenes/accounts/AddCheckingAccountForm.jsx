@@ -90,7 +90,7 @@ function AddCheckingAccountForm({ open, onClose, onSubmit }) {
     >
       <Box
         sx={{
-          bgcolor: colors.primary[400],
+          bgcolor: colors.primary[700],
           borderRadius: '15px',
           p: 4,
           width: { xs: '90%', md: '50%' }

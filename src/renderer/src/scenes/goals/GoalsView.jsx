@@ -22,7 +22,7 @@ const MonthlyInvestmentSummary = ({ totalMonthlyInvestments, colors }) => {
     <Box
       width={'300px'}
       height={'180px'}
-      backgroundColor={colors.grey[900]}
+      backgroundColor={colors.primary[600]}
       borderRadius={'8px'}
       marginTop={'16px'}
       display={'flex'}

@@ -133,55 +133,55 @@ export const simpleTokens = (mode) => ({
           200: '#c2c2c2',
           300: '#a3a3a3',
           400: '#858585',
-          500: '#666666',
+          500: '#505051',
           600: '#525252',
           700: '#3d3d3d',
           800: '#292929',
           900: '#141414'
         },
         primary: {
-          100: '#dcdcdc',
-          200: '#bababa',
-          300: '#989898',
-          400: '#767676',
-          500: '#212121',
-          600: '#1a1a1a',
-          700: '#141414',
-          800: '#0d0d0d',
-          900: '#070707'
+          100: '#F5F5F6',
+          200: '#ECECED',
+          300: '#C9C9CA',
+          400: '#959596',
+          500: '#505051',
+          600: '#3A3A45',
+          700: '#28283A',
+          800: '#19192E',
+          900: '#0F0F26'
         },
         greenAccent: {
-          100: '#e0e0e0',
-          200: '#c2c2c2',
-          300: '#a3a3a3',
-          400: '#858585',
-          500: '#666666',
-          600: '#525252',
-          700: '#3d3d3d',
-          800: '#292929',
-          900: '#141414'
+          100: '#CEFCD1',
+          200: '#9FF9AC',
+          300: '#6DEE8D',
+          400: '#48DE7C',
+          500: '#14C965',
+          600: '#0EAC65',
+          700: '#0A9061',
+          800: '#067458',
+          900: '#036052'
         },
         redAccent: {
-          100: '#e0e0e0',
-          200: '#c2c2c2',
-          300: '#a3a3a3',
-          400: '#858585',
-          500: '#666666',
-          600: '#525252',
-          700: '#3d3d3d',
-          800: '#292929',
-          900: '#141414'
+          100: '#FFE4D8',
+          200: '#FFC2B2',
+          300: '#FF9A8B',
+          400: '#FF746F',
+          500: '#FF3F49',
+          600: '#DB2E46',
+          700: '#B71F42',
+          800: '#93143C',
+          900: '#7A0C39'
         },
         blueAccent: {
-          100: '#e0e0e0',
-          200: '#c2c2c2',
-          300: '#a3a3a3',
-          400: '#858585',
-          500: '#666666',
-          600: '#525252',
-          700: '#3d3d3d',
-          800: '#292929',
-          900: '#141414'
+          100: '#CBFCEE',
+          200: '#98FAE7',
+          300: '#63F1E1',
+          400: '#3CE3DE',
+          500: '#04C6D1',
+          600: '#029BB3',
+          700: '#027596',
+          800: '#015479',
+          900: '#003D64'
         }
       }
     : {
@@ -208,37 +208,37 @@ export const simpleTokens = (mode) => ({
           900: '#858585'
         },
         greenAccent: {
-          100: '#141414',
-          200: '#292929',
-          300: '#3d3d3d',
-          400: '#525252',
-          500: '#666666',
-          600: '#858585',
-          700: '#a3a3a3',
-          800: '#c2c2c2',
-          900: '#e0e0e0'
+          100: '#dbf5ee',
+          200: '#b7ebde',
+          300: '#94e2cd',
+          400: '#70d8bd',
+          500: '#4cceac',
+          600: '#3da58a',
+          700: '#2e7c67',
+          800: '#1e5245',
+          900: '#0f2922'
         },
         redAccent: {
-          100: '#141414',
-          200: '#292929',
-          300: '#3d3d3d',
-          400: '#525252',
-          500: '#666666',
-          600: '#858585',
-          700: '#a3a3a3',
-          800: '#c2c2c2',
-          900: '#e0e0e0'
+          100: '#f8dcdb',
+          200: '#f1b9b7',
+          300: '#e99592',
+          400: '#e2726e',
+          500: '#db4f4a',
+          600: '#af3f3b',
+          700: '#832f2c',
+          800: '#58201e',
+          900: '#2c100f'
         },
         blueAccent: {
-          100: '#141414',
-          200: '#292929',
-          300: '#3d3d3d',
-          400: '#525252',
-          500: '#666666',
-          600: '#858585',
-          700: '#a3a3a3',
-          800: '#c2c2c2',
-          900: '#e0e0e0'
+          100: '#e1e2fe',
+          200: '#c3c6fd',
+          300: '#a4a9fc',
+          400: '#868dfb',
+          500: '#6870fa',
+          600: '#535ac8',
+          700: '#3e4396',
+          800: '#2a2d64',
+          900: '#151632'
         }
       })
 })
@@ -442,6 +442,17 @@ export const discordTokens = (mode) => ({
           700: '#8e282a',
           800: '#5f1a1c',
           900: '#2f0d0e'
+        },
+        blueAccent: {
+          100: '#e1e2fe',
+          200: '#c3c6fd',
+          300: '#a4a9fc',
+          400: '#868dfb',
+          500: '#6870fa',
+          600: '#535ac8',
+          700: '#3e4396',
+          800: '#2a2d64',
+          900: '#151632'
         }
       }
     : {
@@ -499,6 +510,17 @@ export const discordTokens = (mode) => ({
           700: '#f18185',
           800: '#f6abae',
           900: '#fad5d6'
+        },
+        blueAccent: {
+          100: '#e1e2fe',
+          200: '#c3c6fd',
+          300: '#a4a9fc',
+          400: '#868dfb',
+          500: '#6870fa',
+          600: '#535ac8',
+          700: '#3e4396',
+          800: '#2a2d64',
+          900: '#151632'
         }
       })
 })
@@ -530,10 +552,46 @@ export const themeSettings = (themeName, mode) => {
     case 'default':
     default:
       colors = defaultTokens(mode)
-      secondaryColor = colors.greenAccent[500]
+      secondaryColor = colors.blueAccent[500]
       focusColor = colors.greenAccent[400]
       break
   }
+
+  const customSemantics = (mode) => {
+    const isDark = mode === 'dark'
+    return {
+      background: isDark ? colors.primary[700] : colors.primary[400],
+      headline: isDark ? colors.grey[100] : colors.grey[900],
+      subHeadline: isDark ? colors.grey[300] : colors.grey[700],
+      paragraph: isDark ? colors.grey[400] : colors.grey[600],
+      tertiary: isDark ? colors.grey[500] : colors.grey[500],
+      link: isDark ? colors.blueAccent[400] : colors.blueAccent[600],
+      highlight: isDark ? colors.greenAccent[500] : colors.greenAccent[600],
+      stroke: isDark ? colors.grey[800] : colors.grey[200],
+      card: {
+        background: isDark ? colors.primary[500] : '#ffffff',
+        headline: isDark ? colors.grey[100] : colors.grey[900],
+        paragraph: isDark ? colors.grey[300] : colors.grey[700]
+      },
+      button: {
+        background: colors.blueAccent[500],
+        text: '#ffffff'
+      },
+      form: {
+        inputBackground: isDark ? colors.primary[600] : colors.grey[100],
+        label: isDark ? colors.grey[100] : colors.grey[700],
+        placeholder: isDark ? colors.grey[500] : colors.grey[500],
+        buttonBackground: colors.greenAccent[500],
+        buttonText: '#ffffff'
+      },
+      tag: {
+        background: colors.blueAccent[900],
+        text: colors.blueAccent[200]
+      }
+    }
+  }
+
+  const semantics = customSemantics(mode)
 
   const themeObj = {
     palette: {
@@ -543,7 +601,10 @@ export const themeSettings = (themeName, mode) => {
             primary: { main: colors.primary[500] },
             secondary: { main: secondaryColor },
             neutral: { dark: colors.grey[700], main: colors.grey[500], light: colors.grey[100] },
-            background: { default: colors.primary[700] || colors.primary[500] }
+            background: {
+              default: colors.primary[700] || colors.primary[500],
+              paper: colors.primary[900]
+            }
           }
         : {
             primary: { main: colors.primary[100] },
@@ -552,6 +613,8 @@ export const themeSettings = (themeName, mode) => {
             background: { default: '#fcfcfc' }
           })
     },
+    custom: semantics,
+    colors: colors,
     typography: {
       fontFamily: ['Space Grotesk', 'sans-serif'].join(','),
       fontSize: 12,
@@ -575,14 +638,13 @@ export const themeSettings = (themeName, mode) => {
       },
       MuiDataGrid: {
         styleOverrides: {
-          root: { '--DataGrid-containerBackground': 'rgb(69,153,236)' }
+          root: { '--DataGrid-containerBackground': { color: focusColor } }
         }
       }
     }
   }
 
   // --- KEY CHANGE: ATTACH THE COLORS OBJECT TO THE THEME ---
-  themeObj.colors = colors
 
   return themeObj
 }

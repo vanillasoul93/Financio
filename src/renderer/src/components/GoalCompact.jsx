@@ -24,7 +24,7 @@ const CompactGoalCard = ({ goal }) => {
   return (
     <Box
       sx={{
-        backgroundColor: colors.primary[600],
+        backgroundColor: colors.primary[500],
         borderRadius: '8px',
         p: '16px',
         display: 'flex',

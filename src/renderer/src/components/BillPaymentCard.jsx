@@ -172,7 +172,7 @@ const BillPaymentCard = ({
   return (
     <Box
       sx={{
-        backgroundColor: colors.primary[400], // A slightly lighter background for the card
+        backgroundColor: colors.primary[500], // A slightly lighter background for the card
         borderRadius: '8px',
         padding: '16px',
         display: 'flex',
