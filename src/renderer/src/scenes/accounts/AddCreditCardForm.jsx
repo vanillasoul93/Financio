@@ -13,6 +13,7 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
     credit_limit: '',
     due_date: '',
     associated_website: '',
+    institution: '',
     type: 'Credit Card' // Hardcoded type
   }
 
@@ -39,6 +40,10 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
 
     if (!formData.name.trim()) {
       newErrors.name = 'Card Name is required'
+      isValid = false
+    }
+    if (!formData.name.trim()) {
+      newErrors.institution = 'Financial Institution is required'
       isValid = false
     }
     if (formData.balance === '' || isNaN(Number(formData.balance))) {
@@ -115,6 +120,17 @@ function AddCreditCardForm({ open, onClose, onSubmit }) {
             onChange={handleChange}
             error={!!errors.name}
             helperText={errors.name}
+          />
+          <TextField
+            required
+            fullWidth
+            margin="normal"
+            name="institution"
+            label="Institution"
+            value={formData.institution}
+            onChange={handleChange}
+            error={!!errors.institution}
+            helperText={errors.institution}
           />
           <TextField
             required

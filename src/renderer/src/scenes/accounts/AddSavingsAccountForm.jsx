@@ -18,6 +18,7 @@ function AddSavingsAccountForm({ open, onClose, onSubmit }) {
     balance: '',
     interest_rate: '',
     associated_website: '',
+    institution: '',
     type: 'Savings' // Hardcoded type
   })
 
@@ -42,6 +43,10 @@ function AddSavingsAccountForm({ open, onClose, onSubmit }) {
 
     if (!formData.name.trim()) {
       newErrors.name = 'Account Name is required'
+      isValid = false
+    }
+    if (!formData.name.trim()) {
+      newErrors.institution = 'Financial Institution is required'
       isValid = false
     }
     if (formData.balance === '' || isNaN(Number(formData.balance))) {
@@ -109,6 +114,17 @@ function AddSavingsAccountForm({ open, onClose, onSubmit }) {
             onChange={handleChange}
             error={!!errors.name}
             helperText={errors.name}
+          />
+          <TextField
+            required
+            fullWidth
+            margin="normal"
+            name="institution"
+            label="Institution"
+            value={formData.institution}
+            onChange={handleChange}
+            error={!!errors.institution}
+            helperText={errors.institution}
           />
           <TextField
             required

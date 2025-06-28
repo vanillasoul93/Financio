@@ -56,16 +56,22 @@ const getUsageProgressBar = (params, colors) => {
 
   return (
     <Box
-      sx={{ width: '100%', display: 'flex', alignItems: 'space-evenly', justifyContent: 'center' }}
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}
     >
-      <Typography variant="h6" marginRight={2}>
+      <Typography variant="h6" marginRight={2} width={'15%'}>
         {`${Math.round(progressValue)}%`}
       </Typography>
       <LinearProgress
         variant="determinate"
         value={progressValue}
         color="inherit"
-        sx={{ height: 25, width: 150, borderRadius: '5px', color: color }}
+        sx={{ height: 25, width: '85%', borderRadius: '5px', color: color }}
       />
     </Box>
   )
