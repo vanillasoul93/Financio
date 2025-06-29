@@ -13,7 +13,7 @@ const CustomCircleProgress = ({ value, text }) => {
     if (progress <= 20) {
       return colors.greenAccent[400]
     } else if (progress <= 65) {
-      return colors.blueAccent[400]
+      return colors.brand[600]
     } else {
       return colors.redAccent[400]
     }

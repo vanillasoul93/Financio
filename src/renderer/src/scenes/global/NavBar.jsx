@@ -88,12 +88,27 @@ export default function NavBar() {
           color: '#868dfb !important'
         },
         '& .pro-menu-item.active': {
-          color: '#6870fa !important'
+          color: `${colors.brand[400]} !important`
+        },
+        '& .pro-menu-item.hover': {
+          color: `${colors.brand[400]} !important`
         }
       }}
     >
       <ProSidebar collapsed={isCollapsed}>
-        <Menu iconShape="square">
+        <Menu
+          iconShape="square"
+          menuItemStyles={{
+            button: {
+              // the active class will be added automatically by react router
+              // so we can use it to style the active menu item
+              [`&.active`]: {
+                backgroundColor: '#13395e',
+                color: '#b6c8d9'
+              }
+            }
+          }}
+        >
           <MenuItem
             onClick={() => setIsCollapsed(!isCollapsed)}
             icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
@@ -182,13 +197,13 @@ export default function NavBar() {
               selected={selected}
               setSelected={setSelected}
             />
-            <Item
+            {/* <Item
               title="CreditCards"
               to="/creditcards"
               icon={<CreditCardOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
-            />
+            /> */}
             <Typography variant="h6" color={colors.grey[300]} sx={{ m: '15px 0 5px 20px' }}>
               Other
             </Typography>

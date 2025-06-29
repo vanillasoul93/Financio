@@ -250,7 +250,7 @@ export default function SubscriptionsView() {
               borderBottom: 'none'
             },
             '& .name-column--cell': {
-              color: colors.greenAccent[300]
+              color: colors.brand[500]
             },
             '& .MuiDataGrid-columnHeader': {
               backgroundColor: colors.primary[500] + '!important'

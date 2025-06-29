@@ -33,7 +33,7 @@ const MonthlyInvestmentSummary = ({ totalMonthlyInvestments, colors }) => {
       padding={'16px'}
     >
       <Box flexGrow={1}>
-        <Typography variant="h2" color={colors.greenAccent[400]}>
+        <Typography variant="h2" fontWeight={'500'} color={colors.brand[400]}>
           November {/* Consider making this dynamic */}
         </Typography>
       </Box>
@@ -61,7 +61,7 @@ const MonthlyInvestmentSummary = ({ totalMonthlyInvestments, colors }) => {
           borderRadius: '5px',
           mt: '8px',
           width: '100%',
-          color: colors.blueAccent[500] // Apply custom color here
+          color: colors.brand[500] // Apply custom color here
         }}
         value={50} // Consider making this dynamic (e.g., (saved / goal) * 100)
       />
@@ -236,7 +236,7 @@ export default function GoalsView() {
           <Button
             size="large"
             variant="contained"
-            sx={{ backgroundColor: colors.greenAccent[500], width: '100px' }}
+            sx={{ backgroundColor: colors.brand[700], width: '100px' }}
             onClick={handleAddGoalModal}
           >
             Add

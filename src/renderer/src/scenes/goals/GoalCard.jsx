@@ -47,7 +47,7 @@ const GoalDisplayView = ({
       justifyContent={'flex-start'}
     >
       {/* Goal Icon */}
-      <CurrentGoalIcon sx={{ width: 175, height: 175, fill: colors.blueAccent[600] }} />
+      <CurrentGoalIcon sx={{ width: 175, height: 175, fill: colors.brand[700] }} />
 
       {/* Progress Bar */}
       <LinearProgress
@@ -59,7 +59,7 @@ const GoalDisplayView = ({
           mt: '8px',
           width: '100%',
           // Conditional color based on percentage
-          color: percentage >= 100 ? 'goldenrod' : colors.blueAccent[500]
+          color: percentage >= 100 ? 'goldenrod' : colors.brand[500]
         }}
         value={percentage}
       />
@@ -86,7 +86,7 @@ const GoalDisplayView = ({
       <Typography
         variant="h2"
         fontWeight={600}
-        color={colors.greenAccent[500]}
+        color={colors.brand[500]}
         mt={'8px'}
         textAlign={'center'}
       >
@@ -123,22 +123,21 @@ const GoalDisplayView = ({
         m={'5px 5px 5px 5px'}
         variant="h5"
         fontWeight={400}
-        color={colors.blueAccent[400]}
+        color={colors.brand[300]}
         flexGrow={1}
         flexShrink={1}
         sx={{ overflowWrap: 'break-word' }}
       >
         {monthsLeft} months remaining.
       </Typography>
-      <Box width={'100%'} mt={'8px'} display={'flex'}>
+      <Box width={'100%'} display={'flex'} paddingBottom={'16px'} paddingTop={'16px'}>
         <Button
           variant="contained"
           sx={{
             backgroundColor: colors.redAccent[600],
             width: '100%',
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-            borderTopRightRadius: 0
+            marginRight: '8px',
+            marginLeft: '16px'
           }}
           onClick={handleConfirmOpen}
         >
@@ -147,11 +146,10 @@ const GoalDisplayView = ({
         <Button
           variant="contained"
           sx={{
-            backgroundColor: colors.greenAccent[600],
+            backgroundColor: colors.brand[700],
             width: '100%',
-            borderBottomLeftRadius: 0,
-            borderTopLeftRadius: 0,
-            borderBottomRightRadius: '16px'
+            marginRight: '16px',
+            marginLeft: '8px'
           }}
           onClick={updateCardOverlay}
         >
@@ -213,6 +211,7 @@ const GoalUpdateOverlay = forwardRef(
           borderRadius={'8px'}
           justifyContent={'space-between'}
           alignItems={'center'}
+          width={'100%'}
         >
           {/* Icon with Edit Button */}
           <Box
@@ -224,7 +223,7 @@ const GoalUpdateOverlay = forwardRef(
               position: 'relative'
             }}
           >
-            <CurrentGoalIcon sx={{ width: 100, height: 100, fill: colors.blueAccent[600] }} />
+            <CurrentGoalIcon sx={{ width: 100, height: 100, fill: colors.brand[800] }} />
             <IconButton
               aria-label="edit goal icon"
               onClick={handleEditClick}
@@ -232,9 +231,9 @@ const GoalUpdateOverlay = forwardRef(
                 position: 'absolute',
                 width: 36,
                 height: 36,
-                bottom: -8,
-                right: -8,
-                backgroundColor: colors.blueAccent[500],
+                bottom: -4,
+                right: -12,
+                backgroundColor: colors.brand[700],
                 borderRadius: '50%',
                 boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.3)',
                 zIndex: 1,
@@ -243,7 +242,7 @@ const GoalUpdateOverlay = forwardRef(
                 alignItems: 'center',
                 transition: 'background-color 0.2s ease-in-out',
                 '&:hover': {
-                  backgroundColor: colors.blueAccent[400],
+                  backgroundColor: colors.brand[400],
                   transform: 'scale(1.05)',
                   boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.4)'
                 }
@@ -263,7 +262,7 @@ const GoalUpdateOverlay = forwardRef(
                 borderRadius: '5px',
                 mt: '8px',
                 width: '100%',
-                color: percentage >= 100 ? 'goldenrod' : colors.blueAccent[500]
+                color: percentage >= 100 ? 'goldenrod' : colors.brand[500]
               }}
               value={percentage}
             />
@@ -357,15 +356,14 @@ const GoalUpdateOverlay = forwardRef(
           </Box>
 
           {/* Action Buttons */}
-          <Box display={'flex'} justifyContent={'center'} width={'100%'}>
+          <Box display={'flex'} justifyContent={'center'} width={'100%'} marginBottom={'16px'}>
             <Button
               variant="contained"
               sx={{
                 backgroundColor: colors.redAccent[600],
                 width: '100%',
-                borderBottomLeftRadius: '16px',
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0
+                marginRight: '8px',
+                marginLeft: '16px'
               }}
               onClick={cancelUpdate}
             >
@@ -376,9 +374,8 @@ const GoalUpdateOverlay = forwardRef(
               sx={{
                 backgroundColor: colors.greenAccent[600],
                 width: '100%',
-                borderBottomRightRadius: '16px',
-                borderTopLeftRadius: 0,
-                borderBottomLeftRadius: 0
+                marginRight: '16px',
+                marginLeft: '8px'
               }}
               onClick={handleSave}
             >
@@ -406,7 +403,7 @@ const DeleteConfirmationDialog = ({ open, onClose, onConfirmDelete, name, colors
       <DialogContentText variant="h5" id="alert-dialog-description">
         Are you sure you want to delete
       </DialogContentText>
-      <DialogContentText color={colors.greenAccent[400]} variant="h4" id="alert-dialog-description">
+      <DialogContentText color={colors.brand[400]} variant="h4" id="alert-dialog-description">
         {name}?
       </DialogContentText>
       <DialogContentText variant="h5" id="alert-dialog-description">
@@ -645,8 +642,8 @@ export default function GoalCard({ card, onUpdate, onDelete }) {
       <Card
         sx={{
           minWidth: 300,
-          height: 550,
-          maxHeight: 550,
+          height: 650,
+          maxHeight: 650,
           borderRadius: '16px',
           display: 'flex',
           overflow: 'hidden',

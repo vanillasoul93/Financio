@@ -44,11 +44,11 @@ const getUsageProgressBar = (params, colors) => {
   const limit = params.row.credit_limit
   const progressValue = limit > 0 ? (balance / limit) * 100 : 0
 
-  let color = colors.blueAccent[400]
+  let color = colors.brand[500]
   if (progressValue < 15) {
     color = colors.greenAccent[400]
   } else if (progressValue < 70) {
-    color = colors.blueAccent[400]
+    color = colors.brand[500]
   } else {
     color = colors.redAccent[500]
   }

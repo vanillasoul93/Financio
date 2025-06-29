@@ -262,7 +262,7 @@ export default function DashboardView() {
     []
   )
 
-  const secondaryShadesObject = colors.blueAccent || {}
+  const secondaryShadesObject = colors.brand || {}
 
   // 2. Use Object.values() to convert the object of shades into an array of colors.
   const secondaryShadesArray = Object.values(secondaryShadesObject)
@@ -469,13 +469,13 @@ export default function DashboardView() {
                   <Legend />
                   <Bar
                     dataKey="income"
-                    fill={colors.blueAccent[500]}
+                    fill={colors.brand[500]}
                     stackId="stack"
                     radius={[8, 8, 0, 0]}
                   />
                   <Bar
                     dataKey="expense"
-                    fill={colors.blueAccent[800]}
+                    fill={colors.brand[800]}
                     stackId="stack"
                     radius={[8, 8, 0, 0]}
                   />
@@ -541,13 +541,13 @@ export default function DashboardView() {
                 <Box mt="16px" gap="16px" display="flex" width="100%">
                   <Button
                     variant="contained"
-                    sx={{ flexGrow: 1, backgroundColor: colors.blueAccent[800] }}
+                    sx={{ flexGrow: 1, backgroundColor: colors.brand[800] }}
                   >
                     Add Income
                   </Button>
                   <Button
                     variant="contained"
-                    sx={{ flexGrow: 1, backgroundColor: colors.blueAccent[800] }}
+                    sx={{ flexGrow: 1, backgroundColor: colors.brand[800] }}
                   >
                     Add Expense
                   </Button>
@@ -617,6 +617,7 @@ export default function DashboardView() {
                         outerRadius: 120,
                         paddingAngle: 1,
                         cornerRadius: 5,
+                        borderColor: 'transparent',
                         highlightScope: { fade: 'global', highlight: 'item' },
                         faded: { innerRadius: 90, additionalRadius: 5 },
                         highlighted: { innerRadius: 80, additionalRadius: 20 },

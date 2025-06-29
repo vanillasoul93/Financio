@@ -38,7 +38,6 @@ function App() {
                     <Route path="/bills" element={<Bills />} />
                     <Route path="/subscriptions" element={<Subscriptions />} />
                     <Route path="/expenses" element={<Expenses />} />
-                    <Route path="/creditcards" element={<CreditCards />} />
                     <Route path="/accounts" element={<Accounts />} />
                     <Route path="/goals" element={<GoalsView />} />
                     <Route path="/history" element={<History />} />
